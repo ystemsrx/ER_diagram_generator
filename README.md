@@ -1,5 +1,9 @@
 [English](README.en.md) | [**简体中文**](README.md)
 
+## 快速使用
+
+访问：[ER Diagram Generator](https://ystemsrx.github.io/ER_diagram_generator/sql2er.html)
+
 # SQL/DBML转ER图生成器
 
 一个基于网页的工具，用于从SQL CREATE TABLE语句和DBML格式生成Chen模型ER图。

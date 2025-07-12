@@ -1,5 +1,9 @@
 [**English**](README.en.md) | [简体中文](README.md)
 
+## Quick Start
+
+Visit: [ER Diagram Generator](https://ystemsrx.github.io/ER_diagram_generator/sql2er.html)
+
 # SQL/DBML to ER Diagram Generator
 
 A web-based tool for generating Chen model ER diagrams from SQL CREATE TABLE statements and DBML format.

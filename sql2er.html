@@ -1,0 +1,1602 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SQL/DBML2ER</title>
+    <link rel="stylesheet" href="https://unpkg.com/antd@5.19.1/dist/reset.css" />
+    <link rel="stylesheet" href="https://unpkg.com/antd@5.19.1/dist/antd.min.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            color: #1a1a1a;
+        }
+
+        .app-container {
+            min-height: 100vh;
+            padding: 24px;
+            background: rgba(255, 255, 255, 0.05);
+            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 32px;
+            padding: 24px 0;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #ffffff 0%, #f0f0f0 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin: 0;
+            text-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            color: rgba(255, 255, 255, 0.8);
+            margin: 8px 0 0 0;
+            font-weight: 400;
+        }
+
+        #root {
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .main-content {
+            display: flex;
+            gap: 24px;
+            align-items: stretch;
+        }
+
+        .input-section {
+            flex: 1;
+            min-width: 400px;
+        }
+
+        .output-section {
+            flex: 2;
+            min-width: 600px;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            -webkit-backdrop-filter: blur(20px);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .glass-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .card-header {
+            padding: 24px 24px 16px 24px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+        }
+
+        .card-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .card-title::before {
+            content: "";
+            width: 4px;
+            height: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 2px;
+        }
+
+        .card-content {
+            padding: 24px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .input-textarea {
+            width: 100%;
+            min-height: 500px;
+            border: 2px solid rgba(0, 0, 0, 0.08);
+            border-radius: 12px;
+            padding: 16px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.6;
+            background: rgba(248, 250, 252, 0.8);
+            color: #1a1a1a;
+            resize: none;
+            transition: all 0.3s ease;
+            flex: 1;
+        }
+
+        .input-textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            background: rgba(255, 255, 255, 0.9);
+        }
+
+        .generate-button {
+            width: 100%;
+            height: 48px;
+            border: none;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 16px;
+            box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
+        }
+
+        .generate-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
+        }
+
+        .generate-button:active {
+            transform: translateY(0);
+        }
+
+        .generate-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .diagram-container {
+            width: 100%;
+            height: 600px;
+            border: 2px solid rgba(0, 0, 0, 0.08);
+            border-radius: 12px;
+            background: #ffffff;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+        }
+
+        .error-message {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+            color: white;
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 16px;
+            border: none;
+            box-shadow: 0 4px 16px rgba(255, 107, 107, 0.3);
+        }
+
+        .info-section {
+            margin-top: 24px;
+            padding: 20px;
+            background: rgba(248, 250, 252, 0.8);
+            border-radius: 12px;
+            border: 1px solid rgba(0, 0, 0, 0.06);
+        }
+
+        .info-section h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin: 0 0 12px 0;
+        }
+
+        .info-section p {
+            font-size: 0.9rem;
+            color: #6b7280;
+            margin: 4px 0;
+            line-height: 1.5;
+        }
+
+        .info-section p strong {
+            color: #374151;
+            font-weight: 600;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .feature-item {
+            background: rgba(255, 255, 255, 0.6);
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid rgba(0, 0, 0, 0.04);
+        }
+
+        .feature-item strong {
+            color: #667eea;
+            font-weight: 600;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 1024px) {
+            .main-content {
+                flex-direction: column;
+            }
+
+            .input-section, .output-section {
+                min-width: unset;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .app-container {
+                padding: 16px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8rem;
+            }
+
+            .card-content {
+                padding: 16px;
+            }
+
+            .input-textarea {
+                min-height: 400px;
+            }
+
+            .diagram-container {
+                height: 500px;
+            }
+        }
+
+        /* 自定义滚动条 */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: rgba(102, 126, 234, 0.5);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(102, 126, 234, 0.7);
+        }
+
+        /* 加载动画 */
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(102, 126, 234, 0.2);
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* 按钮加载状态 */
+        .generate-button.loading {
+            pointer-events: none;
+            opacity: 0.8;
+        }
+
+        .generate-button.loading::after {
+            content: "";
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top: 2px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-left: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <div class="header">
+            <h1>SQL/DBML转ER图生成器</h1>
+            <p>基于Chen模型的数据库设计工具</p>
+        </div>
+
+        <div id="root"></div>
+    </div>
+
+    <!-- Dependencies -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://unpkg.com/dayjs@1.11.10/dayjs.min.js"></script>
+    <script src="https://unpkg.com/antd@5.19.1/dist/antd.min.js"></script>
+    <script src="https://unpkg.com/@antv/g6@4.8.24/dist/g6.min.js"></script>
+    
+    <!-- Main Application Script -->
+    <script type="text/babel">
+        window.addEventListener('load', () => {
+            const { useState, useEffect, useRef } = React;
+            const G6 = window.G6;
+
+            // Simple SQL Parser for CREATE TABLE statements
+            const parseSQLTables = (sql) => {
+                const tables = [];
+                const relationships = [];
+                
+                // Remove comments and normalize whitespace
+                const cleanSql = sql
+                    .replace(/--.*$/gm, '')
+                    .replace(/\/\*[\s\S]*?\*\//g, '')
+                    .trim();
+
+                // Split SQL into individual statements. This is more robust.
+                const statements = cleanSql.split(';').filter(s => s.trim());
+
+                statements.forEach(statement => {
+                    // We only care about CREATE TABLE statements
+                    const createTableMatch = statement.match(/^\s*CREATE\s+TABLE/i);
+                    if (!createTableMatch) {
+                        return;
+                    }
+
+                    // Extract table name using a simpler regex on the single statement
+                    const tableNameMatch = statement.match(/CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?\`?(\w+)\`?/i);
+                    if (!tableNameMatch) return;
+                    
+                    const tableName = tableNameMatch[1];
+
+                    // Manually find the content within the main parentheses to avoid complex regex
+                    const openParenIndex = statement.indexOf('(');
+                    if (openParenIndex === -1) return;
+
+                    let closeParenIndex = -1;
+                    let parenDepth = 0;
+                    for (let i = openParenIndex + 1; i < statement.length; i++) {
+                        const char = statement[i];
+                        if (char === '(') {
+                            parenDepth++;
+                        } else if (char === ')') {
+                            if (parenDepth === 0) {
+                                closeParenIndex = i;
+                                break;
+                            }
+                            parenDepth--;
+                        }
+                    }
+
+                    if (closeParenIndex === -1) {
+                        return; // Malformed CREATE TABLE statement
+                    }
+
+                    const tableBody = statement.substring(openParenIndex + 1, closeParenIndex);
+                    
+                    const columns = [];
+                    const primaryKeys = [];
+                    const foreignKeys = [];
+
+                    // Split by commas, but be careful with nested parentheses for types like DECIMAL(10, 2)
+                    const parts = [];
+                    let currentPart = '';
+                    let depth = 0;
+                    
+                    for (let i = 0; i < tableBody.length; i++) {
+                        const char = tableBody[i];
+                        if (char === '(') depth++;
+                        else if (char === ')') depth--;
+                        else if (char === ',' && depth === 0) {
+                            parts.push(currentPart.trim());
+                            currentPart = '';
+                            continue;
+                        }
+                        currentPart += char;
+                    }
+                    if (currentPart.trim()) parts.push(currentPart.trim());
+
+                    parts.forEach(part => {
+                        const trimmedPart = part.trim().replace(/,\s*$/, ''); // Clean trailing commas
+                        if (!trimmedPart) return;
+                        
+                        // Check for PRIMARY KEY constraint at the table level
+                        if (/^PRIMARY\s+KEY\s*\((.*)\)/i.test(trimmedPart)) {
+                            const pkMatch = trimmedPart.match(/^PRIMARY\s+KEY\s*\((.*)\)/i);
+                            if (pkMatch) {
+                                const pkColumns = pkMatch[1].split(',').map(col => col.trim().replace(/[`"']/g, ''));
+                                primaryKeys.push(...pkColumns);
+                            }
+                        }
+                        // Check for FOREIGN KEY constraint
+                        else if (/^(?:CONSTRAINT\s+\S+\s+)?FOREIGN\s+KEY/i.test(trimmedPart)) {
+                            const fkMatch = trimmedPart.match(/^(?:CONSTRAINT\s+\S+\s+)?FOREIGN\s+KEY\s*\(\s*\`?(\w+)\`?\s*\)\s+REFERENCES\s+\`?(\w+)\`?\s*\(\s*\`?(\w+)\`?\s*\)/i);
+                            if (fkMatch) {
+                                foreignKeys.push({
+                                    column: fkMatch[1],
+                                    referencedTable: fkMatch[2],
+                                    referencedColumn: fkMatch[3]
+                                });
+                            }
+                        }
+                        // Regular column definition
+                        else if (/^(\`?\w+\`?)\s+/.test(trimmedPart)) {
+                            const columnMatch = trimmedPart.match(/^(\`?\w+\`?)\s+(\w+(?:\(\d+(?:,\s*\d+)?\))?)(.*)/i);
+                            if (columnMatch) {
+                                const columnName = columnMatch[1].replace(/`/g, '');
+                                const dataType = columnMatch[2];
+                                const constraints = columnMatch[3] || '';
+                                
+                                const isPrimaryKey = /PRIMARY\s+KEY/i.test(constraints);
+                                if (isPrimaryKey) {
+                                    primaryKeys.push(columnName);
+                                }
+                                
+                                columns.push({
+                                    name: columnName,
+                                    type: dataType,
+                                    isPrimaryKey
+                                });
+                            }
+                        }
+                    });
+
+                    tables.push({
+                        name: tableName,
+                        columns,
+                        primaryKeys,
+                        foreignKeys
+                    });
+
+                    // Add relationships
+                    foreignKeys.forEach(fk => {
+                        relationships.push({
+                            from: tableName,
+                            to: fk.referencedTable,
+                            label: fk.column
+                        });
+                    });
+                });
+
+                return { tables, relationships };
+            };
+
+            // DBML Parser
+            const parseDBML = (dbml) => {
+                const tables = [];
+                const relationships = [];
+
+                // Remove comments and normalize whitespace
+                const cleanDbml = dbml
+                    .replace(/\/\/.*$/gm, '')
+                    .replace(/\/\*[\s\S]*?\*\//g, '')
+                    .trim();
+
+                const tableRegex = /Table\s+`?(\w+)`?(?:\s+as\s+`?(\w+)`?)?\s*\{([\s\S]*?)\}/g;
+                let tableMatch;
+
+                while ((tableMatch = tableRegex.exec(cleanDbml)) !== null) {
+                    const tableName = tableMatch[1];
+                    const tableAlias = tableMatch[2];
+                    const tableBody = tableMatch[3].trim();
+                    const columns = [];
+                    const primaryKeys = [];
+                    const foreignKeys = [];
+
+                    tableBody.split('\n').forEach(line => {
+                        if (!line.trim()) return;
+                        
+                        // Match `column_name` type [attributes]
+                        const columnMatch = line.trim().match(/^`?(\w+)`?\s+([\w\d\(\s,]+)(?:\s*\[([^\]]*)\])?/);
+
+                        if (columnMatch) {
+                            const columnName = columnMatch[1];
+                            const columnType = columnMatch[2].trim();
+                            const attributesStr = columnMatch[3] || '';
+                            
+                            const isPrimaryKey = attributesStr.includes('pk') || attributesStr.includes('primary key');
+                            
+                            if (isPrimaryKey) {
+                                primaryKeys.push(columnName);
+                            }
+
+                            // Handle inline references
+                            const refMatch = attributesStr.match(/ref:\s*(?:[-><])\s*`?(\w+)`?\.`?(\w+)`?/);
+                            if (refMatch) {
+                                const toTable = refMatch[1];
+                                const toColumn = refMatch[2];
+
+                                relationships.push({
+                                    from: tableName,
+                                    to: toTable,
+                                    label: columnName
+                                });
+
+                                foreignKeys.push({
+                                    column: columnName,
+                                    referencedTable: toTable,
+                                    referencedColumn: toColumn
+                                });
+                            }
+
+                            columns.push({
+                                name: columnName,
+                                type: columnType,
+                                isPrimaryKey: isPrimaryKey
+                            });
+                        }
+                    });
+
+                    tables.push({
+                        name: tableName,
+                        alias: tableAlias,
+                        columns,
+                        primaryKeys,
+                        foreignKeys: foreignKeys
+                    });
+                }
+
+                const refRegex = /Ref\s*:\s*`?(\w+)`?\.`?(\w+)`?\s*[-><]\s*`?(\w+)`?\.`?(\w+)`?/g;
+                let refMatch;
+                
+                while ((refMatch = refRegex.exec(cleanDbml)) !== null) {
+                    const fromTable = refMatch[1];
+                    const fromColumn = refMatch[2];
+                    const toTable = refMatch[3];
+                    const toColumn = refMatch[4];
+
+                    relationships.push({
+                        from: fromTable,
+                        to: toTable,
+                        label: fromColumn
+                    });
+                    
+                    const table = tables.find(t => t.name === fromTable);
+                    if (table) {
+                        if (!table.foreignKeys) {
+                            table.foreignKeys = [];
+                        }
+                        table.foreignKeys.push({
+                            column: fromColumn,
+                            referencedTable: toTable,
+                            referencedColumn: toColumn
+                        });
+                    }
+                }
+
+                return { tables, relationships };
+            };
+
+            // Generate Chen Model ER diagram data
+            const generateChenModelData = (tables, relationships) => {
+                const nodes = [];
+                const edges = [];
+                const entityMap = new Map(); // 用于存储表名到实体ID的映射
+
+                // Create entity nodes (rectangles) - 不设置固定位置，让布局算法处理
+                tables.forEach((table, tableIndex) => {
+                    const timestamp = Date.now();
+                    const entityId = `entity-${table.name}-${timestamp}-${tableIndex}`;
+                    entityMap.set(table.name, entityId); // 记录映射关系
+                    if (table.alias) {
+                        entityMap.set(table.alias, entityId);
+                    }
+                    
+                    nodes.push({
+                        id: entityId,
+                        type: 'entity',
+                        label: table.name,
+                        // 移除固定的x,y坐标，让布局算法自动处理
+                        style: {
+                            fill: '#fff',
+                            stroke: '#000',
+                            lineWidth: 2
+                        },
+                        // 添加节点分类信息，用于布局算法
+                        nodeType: 'entity'
+                    });
+
+                    // Create attribute nodes (ellipses) for each column
+                    table.columns.forEach((column, colIndex) => {
+                        const attributeId = `attr-${table.name}-${column.name}-${Date.now()}-${colIndex}`;
+                        const isPrimaryKey = table.primaryKeys.includes(column.name) || column.isPrimaryKey;
+                        
+                        nodes.push({
+                            id: attributeId,
+                            type: 'attribute',
+                            label: column.name,
+                            // 移除固定位置
+                            keyType: isPrimaryKey ? 'pk' : 'normal',
+                            style: {
+                                fill: isPrimaryKey ? '#d8f5d7' : '#fff',
+                                stroke: '#000',
+                                lineWidth: isPrimaryKey ? 2 : 1
+                            },
+                            nodeType: 'attribute',
+                            parentEntity: entityId // 标记父实体
+                        });
+
+                        // Connect attribute to entity
+                        edges.push({
+                            id: `edge-${entityId}-${attributeId}-${Date.now()}-${colIndex}`,
+                            source: entityId,
+                            target: attributeId,
+                            style: {
+                                stroke: '#000'
+                            },
+                            edgeType: 'entity-attribute'
+                        });
+                    });
+                });
+
+                // Create relationship nodes (diamonds) and connections
+                relationships.forEach((rel, relIndex) => {
+                    const timestamp = Date.now();
+                    const relationshipId = `rel-${rel.from}-${rel.to}-${rel.label}-${timestamp}`;
+                    
+                    nodes.push({
+                        id: relationshipId,
+                        type: 'relationship',
+                        label: rel.label,
+                        style: {
+                            fill: '#fff',
+                            stroke: '#000',
+                            lineWidth: 2
+                        },
+                        nodeType: 'relationship'
+                    });
+
+                    // Connect source entity (the one with the FK, 'many' side) to relationship
+                    edges.push({
+                        id: `edge-entity-${rel.from}-${relationshipId}-${timestamp}-1`,
+                        source: entityMap.get(rel.from),
+                        target: relationshipId,
+                        label: 'N',
+                        style: {
+                            stroke: '#000',
+                            lineWidth: 2
+                        },
+                        edgeType: 'entity-relationship'
+                    });
+
+                    // Connect relationship to target entity (the one being referenced, 'one' side)
+                    edges.push({
+                        id: `edge-${relationshipId}-entity-${rel.to}-${timestamp}-2`,
+                        source: relationshipId,
+                        target: entityMap.get(rel.to),
+                        label: '1',
+                        style: {
+                            stroke: '#000',
+                            lineWidth: 2
+                        },
+                        edgeType: 'relationship-entity'
+                    });
+                });
+
+                return { nodes, edges };
+            };
+
+            // Register custom node types for Chen model
+            G6.registerNode('entity', {
+                draw(cfg, group) {
+                    const fontSize = 18;
+                    const text = cfg.label || '';
+                    
+                    // 计算文字尺寸，考虑中文字符
+                    const getTextWidth = (text, fontSize) => {
+                        let width = 0;
+                        for (let char of text) {
+                            // 中文字符宽度约等于字体大小，英文字符约为字体大小的0.6倍
+                            if (/[\u4e00-\u9fa5]/.test(char)) {
+                                width += fontSize;
+                            } else {
+                                width += fontSize * 0.6;
+                            }
+                        }
+                        return width;
+                    };
+                    
+                    const textWidth = getTextWidth(text, fontSize);
+                    const padding = 10; // 水平内边距，从20减小到10
+                    const minWidth = 80; // 最小宽度
+                    const minHeight = 50; // 最小高度
+                    
+                    const width = Math.max(minWidth, textWidth + padding * 2);
+                    const height = Math.max(minHeight, fontSize + 20); // 垂直内边距
+                    
+                    const shape = group.addShape('rect', {
+                        attrs: {
+                            x: -width/2,
+                            y: -height/2,
+                            width: width,
+                            height: height,
+                            fill: cfg.style?.fill || '#fff',
+                            stroke: cfg.style?.stroke || '#000',
+                            lineWidth: cfg.style?.lineWidth || 2
+                        },
+                        name: 'entity-shape'
+                    });
+
+                    if (cfg.label) {
+                        group.addShape('text', {
+                            attrs: {
+                                x: 0,
+                                y: 0,
+                                text: cfg.label,
+                                fontSize: fontSize,
+                                textAlign: 'center',
+                                textBaseline: 'middle',
+                                fill: '#000',
+                                fontWeight: 'bold'
+                            },
+                            name: 'entity-text',
+                            capture: false
+                        });
+                    }
+                    
+                    return shape;
+                }
+            });
+
+            G6.registerNode('attribute', {
+                draw(cfg, group) {
+                    const fontSize = 15;
+                    const text = cfg.label || '';
+                    
+                    // 计算文字尺寸，考虑中文字符
+                    const getTextWidth = (text, fontSize) => {
+                        let width = 0;
+                        for (let char of text) {
+                            // 中文字符宽度约等于字体大小，英文字符约为字体大小的0.6倍
+                            if (/[\u4e00-\u9fa5]/.test(char)) {
+                                width += fontSize;
+                            } else {
+                                width += fontSize * 0.6;
+                            }
+                        }
+                        return width;
+                    };
+                    
+                    const textWidth = getTextWidth(text, fontSize);
+                    const padding = 16; // 水平内边距
+                    const minWidth = 60; // 最小宽度
+                    const minHeight = 40; // 最小高度
+                    
+                    const width = Math.max(minWidth, textWidth + padding * 2);
+                    const height = Math.max(minHeight, fontSize + 16); // 垂直内边距
+                    
+                    const shape = group.addShape('ellipse', {
+                        attrs: {
+                            x: 0,
+                            y: 0,
+                            rx: width/2,
+                            ry: height/2,
+                            fill: cfg.style?.fill || '#fff',
+                            stroke: cfg.style?.stroke || '#000',
+                            lineWidth: cfg.style?.lineWidth || 1
+                        },
+                        name: 'attribute-shape'
+                    });
+
+                    if (cfg.label) {
+                        const isPrimaryKey = cfg.keyType === 'pk';
+                        group.addShape('text', {
+                            attrs: {
+                                x: 0,
+                                y: 0,
+                                text: cfg.label,
+                                fontSize: fontSize,
+                                textAlign: 'center',
+                                textBaseline: 'middle',
+                                fill: '#000',
+                                fontWeight: isPrimaryKey ? 'bold' : 'normal'
+                            },
+                            name: 'attribute-text',
+                            capture: false
+                        });
+
+                        // Add underline for primary keys
+                        if (isPrimaryKey) {
+                            const textWidth = getTextWidth(text, fontSize); // 使用精确的文字宽度计算
+                            group.addShape('line', {
+                                attrs: {
+                                    x1: -textWidth/2,
+                                    y1: 12, // 下划线位置
+                                    x2: textWidth/2,
+                                    y2: 12,
+                                    stroke: '#000',
+                                    lineWidth: 1
+                                },
+                                name: 'attribute-underline'
+                            });
+                        }
+                    }
+                    
+                    return shape;
+                }
+            });
+
+            G6.registerNode('relationship', {
+                draw(cfg, group) {
+                    const fontSize = 16;
+                    const text = cfg.label || '';
+                    
+                    // 计算文字尺寸，考虑中文字符
+                    const getTextWidth = (text, fontSize) => {
+                        let width = 0;
+                        for (let char of text) {
+                            // 中文字符宽度约等于字体大小，英文字符约为字体大小的0.6倍
+                            if (/[\u4e00-\u9fa5]/.test(char)) {
+                                width += fontSize;
+                            } else {
+                                width += fontSize * 0.6;
+                            }
+                        }
+                        return width;
+                    };
+                    
+                    const textWidth = getTextWidth(text, fontSize);
+                    const horizontalPadding = 24; // 水平内边距
+                    const verticalPadding = 16; // 垂直内边距
+                    const minWidth = 80; // 最小宽度
+                    const minHeight = 40; // 最小高度
+                    
+                    // 计算菱形的实际宽度和高度
+                    // 菱形是扁的，宽度要比高度大
+                    const requiredWidth = textWidth + horizontalPadding * 2;
+                    const requiredHeight = fontSize + verticalPadding * 2;
+                    
+                    // 菱形的水平半径（宽度的一半）
+                    const halfWidth = Math.max(minWidth / 2, requiredWidth / 2);
+                    // 菱形的垂直半径（高度的一半），设置为宽度的0.6倍，让菱形变扁
+                    const halfHeight = Math.max(minHeight / 2, Math.min(halfWidth * 0.6, requiredHeight / 2));
+                    
+                    const shape = group.addShape('polygon', {
+                        attrs: {
+                            points: [
+                                [0, -halfHeight],        // 上顶点
+                                [halfWidth, 0],          // 右顶点  
+                                [0, halfHeight],         // 下顶点
+                                [-halfWidth, 0]          // 左顶点
+                            ],
+                            fill: cfg.style?.fill || '#fff',
+                            stroke: cfg.style?.stroke || '#000',
+                            lineWidth: cfg.style?.lineWidth || 2
+                        },
+                        name: 'relationship-shape'
+                    });
+
+                    if (cfg.label) {
+                        group.addShape('text', {
+                            attrs: {
+                                x: 0,
+                                y: 0,
+                                text: cfg.label,
+                                fontSize: fontSize,
+                                textAlign: 'center',
+                                textBaseline: 'middle',
+                                fill: '#000'
+                            },
+                            name: 'relationship-text',
+                            capture: false
+                        });
+                    }
+                    
+                    return shape;
+                }
+            });
+
+            const App = () => {
+                const [inputText, setInputText] = useState(`// 示例DBML，请在此处粘贴您的 DBML 或 SQL 语句
+Table users {
+  id INT [pk, increment]
+  username VARCHAR(255) [not null]
+  email VARCHAR(255) [unique]
+  country_id INT
+  created_at TIMESTAMP
+}
+
+Table countries {
+  id INT [pk]
+  name VARCHAR(255) [not null]
+}
+
+Table posts {
+  post_id INT [pk]
+  author_id INT
+  content TEXT
+}
+
+Ref: users.country_id > countries.id
+Ref: posts.author_id > users.id
+`);
+                const [error, setError] = useState(null);
+                const [loading, setLoading] = useState(false);
+                const containerRef = useRef(null);
+                const graphRef = useRef(null);
+
+                // 真正有效的平滑缩放函数
+                const smoothFitView = (graph, duration = 800, easing = 'easeOutCubic') => {
+                    if (!graph || graph.destroyed) return;
+                    
+                    try {
+                        // 获取当前状态
+                        const currentZoom = graph.getZoom();
+                        const currentCenter = graph.getViewPortCenterPoint();
+                        
+                        // 计算目标状态
+                        const group = graph.getGroup();
+                        const bbox = group.getCanvasBBox();
+                        
+                        if (!bbox || bbox.width === 0 || bbox.height === 0) {
+                            // 如果无法获取边界框，直接调用fitView
+                            graph.fitView(20);
+                            return;
+                        }
+                        
+                        const graphWidth = graph.get('width');
+                        const graphHeight = graph.get('height');
+                        const padding = 40; // 边距
+                        
+                        // 计算目标缩放比例
+                        const targetZoom = Math.min(
+                            (graphWidth - padding * 2) / bbox.width,
+                            (graphHeight - padding * 2) / bbox.height
+                        ) * currentZoom;
+                        
+                        // 计算目标中心点 
+                        const targetCenter = {
+                            x: graphWidth / 2,
+                            y: graphHeight / 2
+                        };
+                        
+                        // 执行平滑动画
+                        const startTime = performance.now();
+                        const startZoom = currentZoom;
+                        const startCenter = { ...currentCenter };
+                        
+                        const animate = (currentTime) => {
+                            if (!graph || graph.destroyed) return;
+                            
+                            const elapsed = currentTime - startTime;
+                            let progress = Math.min(elapsed / duration, 1);
+                            
+                            // 缓动函数
+                            if (easing === 'easeOutQuart') {
+                                progress = 1 - Math.pow(1 - progress, 4);
+                            } else { // easeOutCubic
+                                progress = 1 - Math.pow(1 - progress, 3);
+                            }
+                            
+                            // 计算当前帧的值
+                            const frameZoom = startZoom + (targetZoom - startZoom) * progress;
+                            const frameCenter = {
+                                x: startCenter.x + (targetCenter.x - startCenter.x) * progress,
+                                y: startCenter.y + (targetCenter.y - startCenter.y) * progress
+                            };
+                            
+                            // 应用变换
+                            graph.zoomTo(frameZoom, frameCenter);
+                            
+                            // 继续动画
+                            if (progress < 1) {
+                                requestAnimationFrame(animate);
+                            }
+                        };
+                        
+                        requestAnimationFrame(animate);
+                        
+                    } catch (error) {
+                        console.warn('Smooth fit view failed, falling back to instant fit:', error);
+                        graph.fitView(20);
+                    }
+                };
+
+                const handleGenerate = () => {
+                    try {
+                        setError(null);
+                        setLoading(true);
+                        
+                        if (!inputText.trim()) {
+                            setError("输入为空。");
+                            setLoading(false);
+                            return;
+                        }
+
+                        let parsedData;
+                        const potentialSQL = inputText.trim();
+
+                        // Try parsing as SQL first, if it fails (no tables), try DBML.
+                        parsedData = parseSQLTables(potentialSQL);
+
+                        if (parsedData.tables.length === 0) {
+                            parsedData = parseDBML(potentialSQL);
+                        }
+
+                        const { tables, relationships } = parsedData;
+
+                        if (tables.length === 0) {
+                            setError("未找到有效的 CREATE TABLE 或 Table 定义。请确保您的SQL或DBML语法正确。");
+                            setLoading(false);
+                            return;
+                        }
+
+                        const { nodes, edges } = generateChenModelData(tables, relationships);
+                        
+                        // Clear previous graph completely
+                        if (graphRef.current) {
+                            graphRef.current.clear(); // 先清空数据
+                            graphRef.current.destroy(); // 再销毁图形
+                            graphRef.current = null; // 重置引用
+                        }
+
+                        // Create G6 graph
+                        const graph = new G6.Graph({
+                            container: containerRef.current,
+                            width: containerRef.current.offsetWidth,
+                            height: 600,
+                            renderer: 'canvas',
+                            background: '#ffffff', // 设置白色背景，确保复制图片时背景为白色
+                            modes: {
+                            default: [
+                                'drag-node',                         // 1. 先判断拖节点
+                                {
+                                type: 'drag-canvas',
+                                allowDragOnItem: true,             // 2. 允许在 item 上拖画布
+                                enableOptimize: false,              //    （性能优化，可留可删）
+                                shouldBegin(e) {                   // 3. 自定义开始条件
+                                    // e.item 为空 = 真空白处；组合 / 边也算"非 node"
+                                    return !e.item || e.item.getType() !== 'node';
+                                }
+                                },
+                                'zoom-canvas'
+                            ]
+                            },
+
+                            // 优化后的力导向布局配置，以完全避免重叠
+                            layout: {
+                                type: 'force', // 使用普通 force 布局
+                                preventOverlap: true, // 确保节点不重叠
+                                nodeSize: (node) => {
+                                    // 动态计算节点尺寸用于防重叠计算
+                                    const text = node.label || '';
+                                    const getTextWidth = (text, fontSize) => {
+                                        let width = 0;
+                                        for (let char of text) {
+                                            if (/[\u4e00-\u9fa5]/.test(char)) {
+                                                width += fontSize;
+                                            } else {
+                                                width += fontSize * 0.6;
+                                            }
+                                        }
+                                        return width;
+                                    };
+                                    
+                                    if (node.nodeType === 'entity') {
+                                        const textWidth = getTextWidth(text, 18);
+                                        const width = Math.max(80, textWidth + 40);
+                                        return Math.max(width, 140); // 保持最小尺寸
+                                    }
+                                    if (node.nodeType === 'relationship') {
+                                        const textWidth = getTextWidth(text, 16);
+                                        const horizontalPadding = 24;
+                                        const minWidth = 80;
+                                        const requiredWidth = textWidth + horizontalPadding * 2;
+                                        const halfWidth = Math.max(minWidth / 2, requiredWidth / 2);
+                                        // 返回菱形的最大宽度作为节点尺寸，用于防重叠计算
+                                        return halfWidth * 2;
+                                    }
+                                    // attribute
+                                    const textWidth = getTextWidth(text, 15);
+                                    const width = Math.max(60, textWidth + 32);
+                                    return Math.max(width, 60); // 属性节点
+                                },
+                                nodeSpacing: 15,     // 节点间距
+                                nodeStrength: -150,  // 节点间的斥力，增大以更好地分散节点
+                                edgeStrength: 1.0,   // 保持边的拉力
+                                linkDistance: (edge) => {
+                                    // 调整连线长度
+                                    const distances = {
+                                        'entity-attribute': 60,      // 实体到属性
+                                        'entity-relationship': 90,   // 实体到关系的距离
+                                        'relationship-entity': 90    // 关系到实体的距离
+                                    };
+                                    
+                                    const edgeType = edge.edgeType || 'default';
+                                    return distances[edgeType] || 90; // 默认距离
+                                },
+                                collideStrength: 1.0, // 使用最强的碰撞检测力，严格防止重叠
+                                alpha: 0.8,           // 较高的初始随机运动强度，让布局充分"活动"开
+                                alphaDecay: 0.02,    // 加快布局衰减
+                                alphaMin: 0.001,      // 布局停止的阈值，值越小，布局越精确
+                                center: [containerRef.current.offsetWidth / 2, 300], // 动态设置布局中心
+                                gravity: 15,         // 全局向心力
+                                onLayoutEnd: () => {
+                                    // 布局完成后平滑调整视图
+                                    setTimeout(() => {
+                                        if (graphRef.current && !graphRef.current.destroyed) {
+                                            smoothFitView(graphRef.current, 800, 'easeOutCubic');
+                                        }
+                                    }, 200);
+                                }
+                            },
+                            defaultNode: {
+                                style: {
+                                    lineWidth: 2,
+                                    stroke: '#000',
+                                    fill: '#fff'
+                                },
+                                labelCfg: {
+                                    style: {
+                                        fill: '#000',
+                                        fontSize: 16  // 从12增加到16
+                                    }
+                                }
+                            },
+                            defaultEdge: {
+                                style: {
+                                    lineWidth: 1,
+                                    stroke: '#000'
+                                },
+                                labelCfg: {
+                                    style: {
+                                        fill: '#000',
+                                        fontSize: 14,  // 从10增加到14
+                                        background: {
+                                            fill: '#fff',
+                                            padding: [2, 4, 2, 4]
+                                        }
+                                    }
+                                }
+                            },
+                            nodeStateStyles: {
+                                hover: {
+                                    fill: '#e6f7ff',
+                                    stroke: '#1890ff'
+                                }
+                            }
+                        });
+
+                        graphRef.current = graph;
+                        
+                        // Set data and render
+                        graph.data({ nodes, edges });
+                        graph.render();
+                        
+                        // 初始渲染后使用平滑动画调整视图
+                        setTimeout(() => {
+                            smoothFitView(graph, 600, 'easeOutQuart');
+                        }, 200);
+
+                        // Enable interactions
+                        graph.on('node:mouseenter', (e) => {
+                            graph.setItemState(e.item, 'hover', true);
+                        });
+
+                        graph.on('node:mouseleave', (e) => {
+                            graph.setItemState(e.item, 'hover', false);
+                        });
+
+                        // 添加双击编辑功能
+                        let editingNode = null;
+                        let editInput = null;
+
+                        graph.on('node:dblclick', (e) => {
+                            const node = e.item;
+                            const model = node.getModel();
+                            
+                            // 防止重复编辑
+                            if (editingNode) {
+                                finishEditing(false);
+                            }
+                            
+                            startEditing(node, model);
+                        });
+
+                        // 开始编辑节点
+                        const startEditing = (node, model) => {
+                            editingNode = node;
+                            // `getCanvasByPoint` 返回的是相对于 G6 画布左上角的坐标
+                            const canvasPoint = graph.getCanvasByPoint(model.x, model.y);
+                            
+                            // 根据节点类型计算输入框的尺寸和位置
+                            const getNodeDimensions = (nodeModel) => {
+                                const text = nodeModel.label || '';
+                                const getTextWidth = (text, fontSize) => {
+                                    let width = 0;
+                                    for (let char of text) {
+                                        if (/[\u4e00-\u9fa5]/.test(char)) {
+                                            width += fontSize;
+                                        } else {
+                                            width += fontSize * 0.6;
+                                        }
+                                    }
+                                    return width;
+                                };
+                                
+                                let width, height, fontSize;
+                                
+                                if (nodeModel.type === 'entity') {
+                                    fontSize = 18;
+                                    const textWidth = getTextWidth(text, fontSize);
+                                    width = Math.max(80, textWidth + 20);
+                                    height = Math.max(50, fontSize + 20);
+                                } else if (nodeModel.type === 'relationship') {
+                                    fontSize = 16;
+                                    const textWidth = getTextWidth(text, fontSize);
+                                    const horizontalPadding = 24;
+                                    const minWidth = 80;
+                                    const requiredWidth = textWidth + horizontalPadding * 2;
+                                    const halfWidth = Math.max(minWidth / 2, requiredWidth / 2);
+                                    width = halfWidth * 2;
+                                    height = Math.max(40, Math.min(halfWidth * 0.6, fontSize + 16) * 2);
+                                } else { // attribute
+                                    fontSize = 15;
+                                    const textWidth = getTextWidth(text, fontSize);
+                                    width = Math.max(60, textWidth + 32);
+                                    height = Math.max(40, fontSize + 16);
+                                }
+                                
+                                return { width, height, fontSize };
+                            };
+                            
+                            const dimensions = getNodeDimensions(model);
+                            
+                            // 创建输入框
+                            editInput = document.createElement('input');
+                            editInput.type = 'text';
+                            editInput.value = model.label || '';
+                            editInput.style.position = 'absolute';
+                            // 定位是相对于 G6 的容器 (containerRef.current)
+                            editInput.style.left = (canvasPoint.x - dimensions.width / 2) + 'px';
+                            editInput.style.top = (canvasPoint.y - dimensions.height / 2) + 'px';
+                            editInput.style.width = dimensions.width + 'px';
+                            editInput.style.height = dimensions.height + 'px';
+                            editInput.style.padding = '0';
+                            editInput.style.border = '2px solid #667eea';
+                            editInput.style.outline = 'none';
+                            editInput.style.fontSize = dimensions.fontSize + 'px';
+                            editInput.style.textAlign = 'center';
+                            editInput.style.backgroundColor = 'rgba(255, 255, 255, 0.95)';
+                            editInput.style.zIndex = '1000';
+                            editInput.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.2)';
+                            editInput.style.fontWeight = (model.type === 'entity' || model.keyType === 'pk') ? 'bold' : 'normal';
+                            
+                            // 根据节点类型设置边框样式
+                            if (model.type === 'entity') {
+                                editInput.style.borderRadius = '4px';
+                            } else if (model.type === 'relationship') {
+                                editInput.style.borderRadius = '8px';
+                                // 菱形节点用矩形输入框，不旋转以便于编辑
+                            } else { // attribute
+                                editInput.style.borderRadius = '50%';
+                            }
+                            
+                            // 将输入框附加到 G6 的容器中
+                            containerRef.current.appendChild(editInput);
+                            editInput.focus();
+                            editInput.select();
+                            
+                            // 监听键盘事件
+                            editInput.addEventListener('keydown', (e) => {
+                                if (e.key === 'Enter') {
+                                    finishEditing(true);
+                                    e.preventDefault();
+                                } else if (e.key === 'Escape') {
+                                    finishEditing(false);
+                                    e.preventDefault();
+                                }
+                            });
+                            
+                            // 监听失去焦点事件
+                            editInput.addEventListener('blur', () => {
+                                setTimeout(() => finishEditing(true), 100);
+                            });
+                        };
+
+                        // 完成编辑
+                        const finishEditing = (save) => {
+                            if (!editingNode || !editInput) return;
+                            
+                            if (save && editInput.value.trim()) {
+                                const newLabel = editInput.value.trim();
+                                const model = editingNode.getModel();
+                                
+                                // 更新节点标签
+                                graph.updateItem(editingNode, {
+                                    label: newLabel
+                                });
+                                
+                                // 如果是属性节点，可能需要更新相关的数据结构
+                                if (model.type === 'attribute') {
+                                    // 可以在这里添加额外的数据同步逻辑
+                                    console.log(`属性 ${model.label} 已更新为 ${newLabel}`);
+                                } else if (model.type === 'entity') {
+                                    console.log(`实体 ${model.label} 已更新为 ${newLabel}`);
+                                } else if (model.type === 'relationship') {
+                                    console.log(`关系 ${model.label} 已更新为 ${newLabel}`);
+                                }
+                            }
+                            
+                            // 清理编辑状态
+                            if (editInput && editInput.parentNode) {
+                                editInput.parentNode.removeChild(editInput);
+                            }
+                            editInput = null;
+                            editingNode = null;
+                        };
+
+                        // 点击画布其他地方也结束编辑
+                        graph.on('canvas:click', () => {
+                            if (editingNode) {
+                                finishEditing(true);
+                            }
+                        });
+                        
+                        // 自定义拖拽逻辑：拖动实体时带动相关属性一起移动
+                        let draggedEntity = null;
+                        let relatedAttributes = [];
+                        let dragStartPositions = new Map();
+                        
+                        graph.on('node:dragstart', (e) => {
+                            const node = e.item;
+                            const nodeModel = node.getModel();
+                            
+                            // 只处理实体节点的拖拽
+                            if (nodeModel.type === 'entity') {
+                                draggedEntity = node;
+                                relatedAttributes = [];
+                                dragStartPositions.clear();
+                                
+                                // 记录实体的初始位置
+                                dragStartPositions.set(nodeModel.id, { x: nodeModel.x, y: nodeModel.y });
+                                
+                                // 找到所有相关的属性节点
+                                const allNodes = graph.getNodes();
+                                allNodes.forEach(n => {
+                                    const model = n.getModel();
+                                    if (model.type === 'attribute' && model.parentEntity === nodeModel.id) {
+                                        relatedAttributes.push(n);
+                                        // 记录属性的初始位置
+                                        dragStartPositions.set(model.id, { x: model.x, y: model.y });
+                                    }
+                                });
+                            }
+                        });
+
+                        graph.on('node:drag', (e) => {
+                            const node = e.item;
+                            const nodeModel = node.getModel();
+                            
+                            // 只处理实体节点的拖拽
+                            if (nodeModel.type === 'entity' && draggedEntity === node) {
+                                const currentPos = { x: nodeModel.x, y: nodeModel.y };
+                                const startPos = dragStartPositions.get(nodeModel.id);
+                                
+                                if (startPos) {
+                                    // 计算实体的移动距离
+                                    const deltaX = currentPos.x - startPos.x;
+                                    const deltaY = currentPos.y - startPos.y;
+                                    
+                                    // 同步移动所有相关的属性节点
+                                    relatedAttributes.forEach(attrNode => {
+                                        const attrModel = attrNode.getModel();
+                                        const attrStartPos = dragStartPositions.get(attrModel.id);
+                                        
+                                        if (attrStartPos) {
+                                            const newX = attrStartPos.x + deltaX;
+                                            const newY = attrStartPos.y + deltaY;
+                                            
+                                            // 更新属性节点位置
+                                            graph.updateItem(attrNode, { x: newX, y: newY });
+                                        }
+                                    });
+                                }
+                            }
+                        });
+
+                        graph.on('node:dragend', (e) => {
+                            const node = e.item;
+                            const nodeModel = node.getModel();
+                            
+                            // 清理拖拽状态
+                            if (nodeModel.type === 'entity' && draggedEntity === node) {
+                                draggedEntity = null;
+                                relatedAttributes = [];
+                                dragStartPositions.clear();
+                            }
+                        });
+
+                        // 自动布局说明：
+                        // 1. force布局会自动计算节点位置，避免重叠
+                        // 2. 不同类型节点有不同的排斥力和间距
+                        // 3. 连线长度根据关系类型自动调整
+                        // 4. 布局完成后自动调整视图大小
+
+                    } catch (e) {
+                        console.error("SQL Parsing error:", e);
+                        setError(`SQL 解析失败: ${e.message}. 请检查SQL语法是否正确。`);
+                    } finally {
+                        setLoading(false);
+                    }
+                };
+                
+                useEffect(() => {
+                    handleGenerate();
+                    
+                    // Cleanup on unmount
+                    return () => {
+                        if (graphRef.current) {
+                            graphRef.current.destroy();
+                        }
+                    };
+                }, []);
+
+                const handleResize = () => {
+                    if (graphRef.current && containerRef.current) {
+                        graphRef.current.changeSize(
+                            containerRef.current.offsetWidth,
+                            600
+                        );
+                    }
+                };
+
+                useEffect(() => {
+                    window.addEventListener('resize', handleResize);
+                    return () => window.removeEventListener('resize', handleResize);
+                }, []);
+
+                return (
+                    <React.Fragment>
+                        <div className="main-content">
+                            <div className="input-section">
+                                <div className="glass-card">
+                                    <div className="card-header">
+                                        <h2 className="card-title">SQL / DBML 输入</h2>
+                                    </div>
+                                    <div className="card-content">
+                                        <textarea
+                                            className="input-textarea"
+                                            value={inputText}
+                                            onChange={(e) => setInputText(e.target.value)}
+                                            placeholder="在此处粘贴您的 CREATE TABLE 或 DBML 语句"
+                                        />
+                                        <button
+                                            className={`generate-button ${loading ? 'loading' : ''}`}
+                                            onClick={handleGenerate}
+                                            disabled={loading}
+                                        >
+                                            {loading ? '生成中...' : '生成ER图'}
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="output-section">
+                                <div className="glass-card">
+                                    <div className="card-header">
+                                        <h2 className="card-title">ER图预览</h2>
+                                    </div>
+                                    <div className="card-content">
+                                        {error && (
+                                            <div className="error-message">
+                                                {error}
+                                            </div>
+                                        )}
+                                        <div className="diagram-container">
+                                            {loading && (
+                                                <div className="loading-overlay">
+                                                    <div className="loading-spinner"></div>
+                                                </div>
+                                            )}
+                                            <div 
+                                                ref={containerRef} 
+                                                style={{ 
+                                                    width: '100%', 
+                                                    height: '100%',
+                                                    position: 'relative' // 添加相对定位，以便输入框可以正确定位
+                                                }}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div className="glass-card" style={{ marginTop: '24px' }}>
+                            <div className="card-header">
+                                <h2 className="card-title">Chen模型说明</h2>
+                            </div>
+                            <div className="card-content">
+                                <div className="feature-grid">
+                                    <div className="feature-item">
+                                        <strong>矩形：</strong>表示实体（Entity）
+                                    </div>
+                                    <div className="feature-item">
+                                        <strong>菱形：</strong>表示关系（Relationship）
+                                    </div>
+                                    <div className="feature-item">
+                                        <strong>椭圆：</strong>表示属性（Attribute）
+                                    </div>
+                                    <div className="feature-item">
+                                        <strong>下划线：</strong>表示主键属性
+                                    </div>
+                                    <div className="feature-item">
+                                        <strong>双击编辑：</strong>双击任意节点即可在原位置编辑内容
+                                    </div>
+                                </div>
+                                <p style={{ marginTop: '16px', fontSize: '0.9rem', color: '#6b7280' }}>
+                                    <strong>支持格式：</strong>SQL (CREATE TABLE) 和 DBML
+                                </p>
+                                <p style={{ marginTop: '4px', fontSize: '0.9rem', color: '#6b7280' }}>
+                                    <strong>交互说明：</strong>可拖拽节点调整位置，鼠标滚轮缩放，拖拽空白区域平移视图，双击节点可编辑内容
+                                </p>
+                                <p style={{ marginTop: '4px', fontSize: '0.9rem', color: '#6b7280' }}>
+                                    <strong>编辑说明：</strong>双击任意节点（实体、属性、关系）可直接在原位置编辑其文本内容，按回车键确认，按ESC键取消，点击其他地方也会自动保存
+                                </p>
+                            </div>
+                        </div>
+                    </React.Fragment>
+                );
+            };
+
+            const root = ReactDOM.createRoot(document.getElementById('root'));
+            root.render(
+                <React.StrictMode>
+                    <App />
+                </React.StrictMode>
+            );
+        });
+    </script>
+</body>
+</html> 

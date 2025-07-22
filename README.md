@@ -2,7 +2,11 @@
 
 ## 快速使用
 
-访问：[ER Diagram Generator](https://ystemsrx.github.io/ER_diagram_generator/sql2er.html)
+免费使用，直接访问：[ER Diagram Generator](https://ystemsrx.github.io/ER_diagram_generator/sql2er.html)
+
+受不了了，他妈的B站上搜的DBML/SQL转Chen模型的ER图生成器都他妈的要登录和要钱，没见过这么恶心的东西，直接开源了。
+
+如果需要绘制逻辑模型，请使用 [dbdiagram.io](https://dbdiagram.io/)，免费的。
 
 # SQL/DBML转ER图生成器
 

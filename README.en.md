@@ -4,6 +4,8 @@
 
 Visit: [ER Diagram Generator](https://ystemsrx.github.io/ER_diagram_generator/sql2er.html)
 
+If you need to draw a logical model, please use [dbdiagram.io](https://dbdiagram.io), which is free.
+
 # SQL/DBML to ER Diagram Generator
 
 A web-based tool for generating Chen model ER diagrams from SQL CREATE TABLE statements and DBML format.

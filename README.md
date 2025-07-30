@@ -1,5 +1,7 @@
 [English](README.en.md) | [**简体中文**](README.md)
 
+优雅的SQL建表语句转ER图的在线网页工具（SQL to ER Diagram Generator.）
+
 ## 快速使用
 
 免费使用，直接访问：[ER Diagram Generator](https://ystemsrx.github.io/ER_diagram_generator/sql2er.html)

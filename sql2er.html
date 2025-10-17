@@ -480,8 +480,8 @@
                         return;
                     }
 
-                    // Extract table name using a simpler regex on the single statement
-                    const tableNameMatch = statement.match(/CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?\`?(\w+)\`?/i);
+                    // Extract table name
+                    const tableNameMatch = statement.match(/CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?\`?([\w\u4e00-\u9fa5]+)\`?/i);
                     if (!tableNameMatch) return;
                     
                     const tableName = tableNameMatch[1];
@@ -547,7 +547,7 @@
                         }
                         // Check for FOREIGN KEY constraint
                         else if (/^(?:CONSTRAINT\s+\S+\s+)?FOREIGN\s+KEY/i.test(trimmedPart)) {
-                            const fkMatch = trimmedPart.match(/^(?:CONSTRAINT\s+\S+\s+)?FOREIGN\s+KEY\s*\(\s*\`?(\w+)\`?\s*\)\s+REFERENCES\s+\`?(\w+)\`?\s*\(\s*\`?(\w+)\`?\s*\)/i);
+                            const fkMatch = trimmedPart.match(/^(?:CONSTRAINT\s+\S+\s+)?FOREIGN\s+KEY\s*\(\s*\`?([\w\u4e00-\u9fa5]+)\`?\s*\)\s+REFERENCES\s+\`?([\w\u4e00-\u9fa5]+)\`?\s*\(\s*\`?([\w\u4e00-\u9fa5]+)\`?\s*\)/i);
                             if (fkMatch) {
                                 foreignKeys.push({
                                     column: fkMatch[1],
@@ -557,8 +557,8 @@
                             }
                         }
                         // Regular column definition
-                        else if (/^(\`?\w+\`?)\s+/.test(trimmedPart)) {
-                            const columnMatch = trimmedPart.match(/^(\`?\w+\`?)\s+(\w+(?:\(\d+(?:,\s*\d+)?\))?)(.*)/i);
+                        else if (/^(\`?[\w\u4e00-\u9fa5]+\`?)\s+/.test(trimmedPart)) {
+                            const columnMatch = trimmedPart.match(/^(\`?[\w\u4e00-\u9fa5]+\`?)\s+(\w+(?:\(\d+(?:,\s*\d+)?\))?)(.*)/i);
                             if (columnMatch) {
                                 const columnName = columnMatch[1].replace(/`/g, '');
                                 const dataType = columnMatch[2];
@@ -609,7 +609,7 @@
                     .replace(/\/\*[\s\S]*?\*\//g, '')
                     .trim();
 
-                const tableRegex = /Table\s+`?(\w+)`?(?:\s+as\s+`?(\w+)`?)?\s*\{([\s\S]*?)\}/g;
+                const tableRegex = /Table\s+`?([\w\u4e00-\u9fa5]+)`?(?:\s+as\s+`?([\w\u4e00-\u9fa5]+)`?)?\s*\{([\s\S]*?)\}/g;
                 let tableMatch;
 
                 while ((tableMatch = tableRegex.exec(cleanDbml)) !== null) {
@@ -624,7 +624,7 @@
                         if (!line.trim()) return;
                         
                         // Match `column_name` type [attributes]
-                        const columnMatch = line.trim().match(/^`?(\w+)`?\s+([\w\d\(\s,]+)(?:\s*\[([^\]]*)\])?/);
+                        const columnMatch = line.trim().match(/^`?([\w\u4e00-\u9fa5]+)`?\s+([\w\d\(\s,]+)(?:\s*\[([^\]]*)\])?/);
 
                         if (columnMatch) {
                             const columnName = columnMatch[1];
@@ -638,7 +638,7 @@
                             }
 
                             // Handle inline references
-                            const refMatch = attributesStr.match(/ref:\s*(?:[-><])\s*`?(\w+)`?\.`?(\w+)`?/);
+                            const refMatch = attributesStr.match(/ref:\s*(?:[-><])\s*`?([\w\u4e00-\u9fa5]+)`?\.`?([\w\u4e00-\u9fa5]+)`?/);
                             if (refMatch) {
                                 const toTable = refMatch[1];
                                 const toColumn = refMatch[2];
@@ -673,7 +673,8 @@
                     });
                 }
 
-                const refRegex = /Ref\s*:\s*`?(\w+)`?\.`?(\w+)`?\s*[-><]\s*`?(\w+)`?\.`?(\w+)`?/g;
+                // 支持中文表名和列名的 Ref 语句
+                const refRegex = /Ref\s*:\s*`?([\w\u4e00-\u9fa5]+)`?\.`?([\w\u4e00-\u9fa5]+)`?\s*[-><]\s*`?([\w\u4e00-\u9fa5]+)`?\.`?([\w\u4e00-\u9fa5]+)`?/g;
                 let refMatch;
                 
                 while ((refMatch = refRegex.exec(cleanDbml)) !== null) {

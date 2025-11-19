@@ -244,6 +244,19 @@
             transform: none;
         }
 
+        /* 按钮容器样式 */
+        .button-container {
+            display: flex;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .button-container .generate-button,
+        .button-container .export-button {
+            margin-top: 0;
+            flex: 1;
+        }
+
         .diagram-container {
             width: 100%;
             height: 600px;
@@ -432,6 +445,58 @@
             border-radius: 50%;
             animation: spin 1s linear infinite;
             margin-left: 8px;
+        }
+
+        /* 导出按钮样式 */
+        .export-button {
+            width: 100%;
+            height: 48px;
+            border: none;
+            border-radius: 16px;
+            background: linear-gradient(135deg, #4CAF50 0%, #66BB6A 25%, #81C784 75%, #A5D6A7 100%);
+            color: white;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            margin-top: 16px;
+            box-shadow: 
+                0 4px 16px rgba(76, 175, 80, 0.4),
+                0 2px 8px rgba(102, 187, 106, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .export-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .export-button:hover::before {
+            left: 100%;
+        }
+
+        .export-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 
+                0 8px 24px rgba(76, 175, 80, 0.5),
+                0 4px 12px rgba(102, 187, 106, 0.3);
+        }
+
+        .export-button:active {
+            transform: translateY(0);
+        }
+
+        .export-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
         }
     </style>
 </head>
@@ -1050,6 +1115,7 @@ Ref: posts.author_id > users.id
 `);
                 const [error, setError] = useState(null);
                 const [loading, setLoading] = useState(false);
+                const [hasGraph, setHasGraph] = useState(false);
                 const containerRef = useRef(null);
                 const graphRef = useRef(null);
 
@@ -1296,6 +1362,7 @@ Ref: posts.author_id > users.id
                         });
 
                         graphRef.current = graph;
+                        setHasGraph(true); // 标记图形已生成
                         
                         // Set data and render
                         graph.data({ nodes, edges });
@@ -1579,6 +1646,138 @@ Ref: posts.author_id > users.id
                     }
                 };
 
+                // 导出SVG功能
+                const handleExportSVG = () => {
+                    if (!graphRef.current || !hasGraph) {
+                        setError('请先生成ER图');
+                        return;
+                    }
+
+                    try {
+                        // 获取当前图形数据，包括节点的实际位置
+                        const data = graphRef.current.save();
+                        
+                        // 创建一个临时容器
+                        const tempContainer = document.createElement('div');
+                        tempContainer.style.position = 'absolute';
+                        tempContainer.style.left = '-9999px';
+                        tempContainer.style.top = '-9999px';
+                        document.body.appendChild(tempContainer);
+                        
+                        // 创建临时SVG图形，使用相同的配置
+                        const tempGraph = new G6.Graph({
+                            container: tempContainer,
+                            width: containerRef.current.offsetWidth,
+                            height: 600,
+                            renderer: 'svg',
+                            modes: {
+                                default: []
+                            },
+                            // 不使用布局，直接使用保存的位置
+                            layout: null,
+                            defaultNode: {
+                                style: {
+                                    lineWidth: 2,
+                                    stroke: '#000',
+                                    fill: '#fff'
+                                },
+                                labelCfg: {
+                                    style: {
+                                        fill: '#000',
+                                        fontSize: 16
+                                    }
+                                }
+                            },
+                            defaultEdge: {
+                                style: {
+                                    lineWidth: 1,
+                                    stroke: '#000'
+                                },
+                                labelCfg: {
+                                    style: {
+                                        fill: '#000',
+                                        fontSize: 14,
+                                        background: {
+                                            fill: '#fff',
+                                            padding: [2, 4, 2, 4]
+                                        }
+                                    }
+                                }
+                            }
+                        });
+
+                        // 读取当前图形数据（包含节点位置）
+                        tempGraph.read(data);
+                        
+                        // 等待渲染完成
+                        setTimeout(() => {
+                            try {
+                                const tempCanvas = tempGraph.get('canvas');
+                                const svgElement = tempCanvas.get('el');
+                                
+                                // 克隆SVG元素以避免修改原始元素
+                                const clonedSvg = svgElement.cloneNode(true);
+                                
+                                // 获取所有图形的边界框
+                                const group = tempGraph.getGroup();
+                                const bbox = group.getCanvasBBox();
+                                
+                                // 添加padding
+                                const padding = 40;
+                                const viewBoxX = bbox.minX - padding;
+                                const viewBoxY = bbox.minY - padding;
+                                const viewBoxWidth = bbox.width + padding * 2;
+                                const viewBoxHeight = bbox.height + padding * 2;
+                                
+                                // 设置SVG属性以包含完整内容
+                                clonedSvg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+                                clonedSvg.setAttribute('width', viewBoxWidth);
+                                clonedSvg.setAttribute('height', viewBoxHeight);
+                                clonedSvg.setAttribute('viewBox', `${viewBoxX} ${viewBoxY} ${viewBoxWidth} ${viewBoxHeight}`);
+                                
+                                // 设置白色背景，使用viewBox的尺寸
+                                const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                                rect.setAttribute('x', viewBoxX);
+                                rect.setAttribute('y', viewBoxY);
+                                rect.setAttribute('width', viewBoxWidth);
+                                rect.setAttribute('height', viewBoxHeight);
+                                rect.setAttribute('fill', '#ffffff');
+                                clonedSvg.insertBefore(rect, clonedSvg.firstChild);
+                                
+                                const svgString = new XMLSerializer().serializeToString(clonedSvg);
+                                downloadSVG(svgString, 'er-diagram.svg');
+                                
+                                // 清理临时图形和容器
+                                tempGraph.destroy();
+                                document.body.removeChild(tempContainer);
+                            } catch (innerError) {
+                                console.error('SVG生成失败:', innerError);
+                                setError('SVG生成失败: ' + innerError.message);
+                                tempGraph.destroy();
+                                if (tempContainer.parentNode) {
+                                    document.body.removeChild(tempContainer);
+                                }
+                            }
+                        }, 1000); // 增加等待时间确保渲染完成
+                    } catch (error) {
+                        console.error('导出SVG失败:', error);
+                        setError('导出SVG失败: ' + error.message);
+                    }
+                };
+
+                // 下载SVG文件
+                const downloadSVG = (svgString, filename) => {
+                    const blob = new Blob([svgString], { type: 'image/svg+xml' });
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = filename;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    URL.revokeObjectURL(url);
+                };
+
                 useEffect(() => {
                     window.addEventListener('resize', handleResize);
                     return () => window.removeEventListener('resize', handleResize);
@@ -1599,13 +1798,22 @@ Ref: posts.author_id > users.id
                                             onChange={(e) => setInputText(e.target.value)}
                                             placeholder="在此处粘贴您的 CREATE TABLE 或 DBML 语句"
                                         />
-                                        <button
-                                            className={`generate-button ${loading ? 'loading' : ''}`}
-                                            onClick={handleGenerate}
-                                            disabled={loading}
-                                        >
-                                            {loading ? '生成中...' : '生成ER图'}
-                                        </button>
+                                        <div className="button-container">
+                                            <button
+                                                className={`generate-button ${loading ? 'loading' : ''}`}
+                                                onClick={handleGenerate}
+                                                disabled={loading}
+                                            >
+                                                {loading ? '生成中...' : '生成ER图'}
+                                            </button>
+                                            <button
+                                                className="export-button"
+                                                onClick={handleExportSVG}
+                                                disabled={!hasGraph}
+                                            >
+                                                导出SVG
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -1671,6 +1879,9 @@ Ref: posts.author_id > users.id
                                 </p>
                                 <p style={{ marginTop: '4px', fontSize: '0.9rem', color: '#6b7280' }}>
                                     <strong>编辑说明：</strong>双击任意节点（实体、属性、关系）可直接在原位置编辑其文本内容，按回车键确认，按ESC键取消，点击其他地方也会自动保存
+                                </p>
+                                <p style={{ marginTop: '4px', fontSize: '0.9rem', color: '#6b7280' }}>
+                                    <strong>导出说明：</strong>点击"导出SVG"按钮可将当前ER图导出为SVG矢量图格式，方便在其他软件中使用或进一步编辑
                                 </p>
                             </div>
                         </div>

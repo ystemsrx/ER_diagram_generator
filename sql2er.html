@@ -689,7 +689,7 @@
                         if (!line.trim()) return;
                         
                         // Match `column_name` type [attributes]
-                        const columnMatch = line.trim().match(/^`?([\w\u4e00-\u9fa5]+)`?\s+([\w\d\(\s,]+)(?:\s*\[([^\]]*)\])?/);
+                        const columnMatch = line.trim().match(/^`?([\w\u4e00-\u9fa5]+)`?\s+([\w\d\(\)\s,]+)(?:\s*\[([^\]]*)\])?/);
 
                         if (columnMatch) {
                             const columnName = columnMatch[1];

@@ -1370,60 +1370,30 @@ Ref: posts.author_id > users.id
                             layout: {
                                 type: 'force', // 使用普通 force 布局
                                 preventOverlap: true, // 确保节点不重叠
+                                // 忽略文本长度，统一处理椭圆/菱形尺寸，避免因内容长短造成布局偏差
                                 nodeSize: (node) => {
-                                    // 动态计算节点尺寸用于防重叠计算
-                                    const text = node.label || '';
-                                    const getTextWidth = (text, fontSize) => {
-                                        let width = 0;
-                                        for (let char of text) {
-                                            if (/[\u4e00-\u9fa5]/.test(char)) {
-                                                width += fontSize;
-                                            } else {
-                                                width += fontSize * 0.6;
-                                            }
-                                        }
-                                        return width;
+                                    const uniformSizes = {
+                                        entity: 140,
+                                        relationship: 90,
+                                        attribute: 90
                                     };
-                                    
-                                    if (node.nodeType === 'entity') {
-                                        const textWidth = getTextWidth(text, 18);
-                                        const width = Math.max(80, textWidth + 40);
-                                        return Math.max(width, 140); // 保持最小尺寸
-                                    }
-                                    if (node.nodeType === 'relationship') {
-                                        const textWidth = getTextWidth(text, 16);
-                                        const horizontalPadding = 24;
-                                        const minWidth = 80;
-                                        const requiredWidth = textWidth + horizontalPadding * 2;
-                                        const halfWidth = Math.max(minWidth / 2, requiredWidth / 2);
-                                        // 返回菱形的最大宽度作为节点尺寸，用于防重叠计算
-                                        return halfWidth * 2;
-                                    }
-                                    // attribute
-                                    const textWidth = getTextWidth(text, 15);
-                                    const width = Math.max(60, textWidth + 32);
-                                    return Math.max(width, 60); // 属性节点
+                                    return uniformSizes[node.nodeType] || 90;
                                 },
-                                nodeSpacing: 15,     // 节点间距
-                                nodeStrength: -150,  // 节点间的斥力，增大以更好地分散节点
-                                edgeStrength: 1.0,   // 保持边的拉力
-                                linkDistance: (edge) => {
-                                    // 调整连线长度
-                                    const distances = {
-                                        'entity-attribute': 60,      // 实体到属性
-                                        'entity-relationship': 90,   // 实体到关系的距离
-                                        'relationship-entity': 90    // 关系到实体的距离
-                                    };
-                                    
-                                    const edgeType = edge.edgeType || 'default';
-                                    return distances[edgeType] || 90; // 默认距离
-                                },
+                                nodeSpacing: 20,     // 增加节点间距，为曲线路由留空间
+                                nodeStrength: -130,  // 斥力提高，为曲线路由留更多空间
+                                edgeStrength: 0.9,   // 略减弱拉力，让路由有更多选择
+                                linkDistance: 120,   // 增加连线长度，为曲线留空间
                                 collideStrength: 1.0, // 使用最强的碰撞检测力，严格防止重叠
-                                alpha: 0.8,           // 较高的初始随机运动强度，让布局充分"活动"开
-                                alphaDecay: 0.02,    // 加快布局衰减
-                                alphaMin: 0.001,      // 布局停止的阈值，值越小，布局越精确
+                                alpha: 0.75,          // 初始运动强度
+                                alphaDecay: 0.045,    // 更快衰减以加速初始布局，但仍可看到调整过程
+                                alphaMin: 0.01,       // 停止阈值略放宽，加快收敛
+                                maxIteration: 400,    // 控制迭代次数，缩短初始布局时间
                                 center: [containerRef.current.offsetWidth / 2, 300], // 动态设置布局中心
-                                gravity: 15,         // 全局向心力
+                                gravity: 8,           // 降低重心力以增加节点间距
+                                tick: () => {
+                                    // 逐帧刷新以展现自动调整过程
+                                    graph.refreshPositions();
+                                },
                                 onLayoutEnd: () => {
                                     // 布局完成后平滑调整视图
                                     setTimeout(() => {
@@ -1459,6 +1429,31 @@ Ref: posts.author_id > users.id
                                             fill: '#fff',
                                             padding: [2, 4, 2, 4]
                                         }
+                                    }
+                                }
+                            },
+                            edgeStateStyles: {
+                                hover: {
+                                    stroke: '#1890ff',
+                                    lineWidth: 2
+                                }
+                            },
+                            defaultEdgeConfig: {
+                                type: 'cubic-horizontal',
+                                router: {
+                                    name: 'orthogonal',
+                                    args: {
+                                        offset: 25,
+                                        maxTurns: 5,
+                                        useMaxTurns: false,
+                                        gridSize: 1
+                                    }
+                                },
+                                connector: {
+                                    name: 'curve',
+                                    args: {
+                                        curveType: 'cubic-horizontal',
+                                        curveOffset: 50
                                     }
                                 }
                             },
@@ -1813,6 +1808,31 @@ Ref: posts.author_id > users.id
                                             fill: '#fff',
                                             padding: [2, 4, 2, 4]
                                         }
+                                    }
+                                }
+                            },
+                            edgeStateStyles: {
+                                hover: {
+                                    stroke: '#1890ff',
+                                    lineWidth: 2
+                                }
+                            },
+                            defaultEdgeConfig: {
+                                type: 'cubic-horizontal',
+                                router: {
+                                    name: 'orthogonal',
+                                    args: {
+                                        offset: 25,
+                                        maxTurns: 5,
+                                        useMaxTurns: false,
+                                        gridSize: 1
+                                    }
+                                },
+                                connector: {
+                                    name: 'curve',
+                                    args: {
+                                        curveType: 'cubic-horizontal',
+                                        curveOffset: 50
                                     }
                                 }
                             }

@@ -136,6 +136,9 @@
             padding: 24px 24px 16px 24px;
             border-bottom: 1px solid rgba(255, 107, 107, 0.2);
             background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 154, 158, 0.05) 100%);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
         .card-title {
@@ -522,6 +525,7 @@
     <script type="text/babel">
         window.addEventListener('load', () => {
             const { useState, useEffect, useRef } = React;
+            const { Switch } = window.antd;
             const G6 = window.G6;
 
             // Simple SQL Parser for CREATE TABLE statements
@@ -771,7 +775,7 @@
             };
 
             // Generate Chen Model ER diagram data
-            const generateChenModelData = (tables, relationships) => {
+            const generateChenModelData = (tables, relationships, isColored = true) => {
                 const nodes = [];
                 const edges = [];
                 const entityMap = new Map(); // 用于存储表名到实体ID的映射
@@ -791,9 +795,15 @@
                         label: table.name,
                         // 移除固定的x,y坐标，让布局算法自动处理
                         style: {
-                            fill: '#fff',
-                            stroke: '#000',
+                            fill: '#ffffff',
+                            stroke: isColored ? '#595959' : '#000000',
                             lineWidth: 2
+                        },
+                        labelCfg: {
+                            style: {
+                                fill: '#000000',
+                                fontWeight: 'bold'
+                            }
                         },
                         // 添加节点分类信息，用于布局算法
                         nodeType: 'entity'
@@ -811,9 +821,15 @@
                             // 移除固定位置
                             keyType: isPrimaryKey ? 'pk' : 'normal',
                             style: {
-                                fill: isPrimaryKey ? '#d8f5d7' : '#fff',
-                                stroke: '#000',
+                                fill: isColored ? (isPrimaryKey ? '#f6ffed' : '#fffbe6') : '#ffffff',
+                                stroke: isColored ? (isPrimaryKey ? '#52c41a' : '#faad14') : '#000000',
                                 lineWidth: isPrimaryKey ? 2 : 1
+                            },
+                            labelCfg: {
+                                style: {
+                                    fill: '#000000',
+                                    fontWeight: isPrimaryKey ? 'bold' : 'normal'
+                                }
                             },
                             nodeType: 'attribute',
                             parentEntity: entityId // 标记父实体
@@ -825,7 +841,7 @@
                             source: entityId,
                             target: attributeId,
                             style: {
-                                stroke: '#000'
+                                stroke: '#000000'
                             },
                             edgeType: 'entity-attribute'
                         });
@@ -842,9 +858,14 @@
                         type: 'relationship',
                         label: rel.label,
                         style: {
-                            fill: '#fff',
-                            stroke: '#000',
+                            fill: isColored ? '#f9f0ff' : '#ffffff',
+                            stroke: isColored ? '#722ed1' : '#000000',
                             lineWidth: 2
+                        },
+                        labelCfg: {
+                            style: {
+                                fill: '#000000'
+                            }
                         },
                         nodeType: 'relationship'
                     });
@@ -856,8 +877,17 @@
                         target: relationshipId,
                         label: 'N',
                         style: {
-                            stroke: '#000',
+                            stroke: '#000000',
                             lineWidth: 2
+                        },
+                        labelCfg: {
+                            style: {
+                                fill: '#000000',
+                                background: {
+                                    fill: '#ffffff',
+                                    padding: [2, 4, 2, 4]
+                                }
+                            }
                         },
                         edgeType: 'entity-relationship'
                     });
@@ -869,8 +899,17 @@
                         target: entityMap.get(rel.to),
                         label: '1',
                         style: {
-                            stroke: '#000',
+                            stroke: '#000000',
                             lineWidth: 2
+                        },
+                        labelCfg: {
+                            style: {
+                                fill: '#000000',
+                                background: {
+                                    fill: '#ffffff',
+                                    padding: [2, 4, 2, 4]
+                                }
+                            }
                         },
                         edgeType: 'relationship-entity'
                     });
@@ -1113,11 +1152,81 @@ Table posts {
 Ref: users.country_id > countries.id
 Ref: posts.author_id > users.id
 `);
+                const [isColored, setIsColored] = useState(true);
                 const [error, setError] = useState(null);
                 const [loading, setLoading] = useState(false);
                 const [hasGraph, setHasGraph] = useState(false);
                 const containerRef = useRef(null);
                 const graphRef = useRef(null);
+
+                // 更新图表样式
+                const updateGraphStyles = (graphInstance, colored) => {
+                    if (!graphInstance || graphInstance.destroyed) return;
+                    
+                    graphInstance.setAutoPaint(false);
+                    
+                    const nodes = graphInstance.getNodes();
+                    nodes.forEach(node => {
+                        const model = node.getModel();
+                        const styles = {};
+                        
+                        if (colored) {
+                            if (model.nodeType === 'entity') {
+                                styles.style = { fill: '#ffffff', stroke: '#595959', lineWidth: 2 };
+                                styles.labelCfg = { style: { fill: '#000000', fontWeight: 'bold' } };
+                            } else if (model.nodeType === 'relationship') {
+                                styles.style = { fill: '#f9f0ff', stroke: '#722ed1', lineWidth: 2 };
+                                styles.labelCfg = { style: { fill: '#000000' } };
+                            } else if (model.nodeType === 'attribute') {
+                                if (model.keyType === 'pk') {
+                                    styles.style = { fill: '#f6ffed', stroke: '#52c41a', lineWidth: 2 };
+                                    styles.labelCfg = { style: { fill: '#000000', fontWeight: 'bold' } };
+                                } else {
+                                    // 普通属性改为黄色边框和淡黄色填充
+                                    styles.style = { fill: '#fffbe6', stroke: '#faad14', lineWidth: 1 };
+                                    styles.labelCfg = { style: { fill: '#000000', fontWeight: 'normal' } };
+                                }
+                            }
+                        } else {
+                            // 黑白模式 (无填充 = 白色背景)
+                            styles.style = { 
+                                fill: '#ffffff', 
+                                stroke: '#000000', 
+                                lineWidth: model.keyType === 'pk' || model.nodeType === 'entity' || model.nodeType === 'relationship' ? 2 : 1 
+                            };
+                            styles.labelCfg = { style: { fill: '#000000', fontWeight: (model.nodeType === 'entity' || model.keyType === 'pk') ? 'bold' : 'normal' } };
+                        }
+                        
+                        graphInstance.updateItem(node, styles);
+                    });
+
+                    // 刷新边
+                    const edges = graphInstance.getEdges();
+                    edges.forEach(edge => {
+                        graphInstance.updateItem(edge, {
+                            style: { stroke: '#000000' },
+                            labelCfg: { 
+                                style: { 
+                                    fill: '#000000', 
+                                    background: { 
+                                        fill: '#ffffff',
+                                        padding: [2, 4, 2, 4]
+                                    } 
+                                } 
+                            }
+                        });
+                    });
+                    
+                    graphInstance.paint();
+                    graphInstance.setAutoPaint(true);
+                };
+
+                // 监听着色状态变化
+                useEffect(() => {
+                    if (hasGraph && graphRef.current) {
+                        updateGraphStyles(graphRef.current, isColored);
+                    }
+                }, [isColored, hasGraph]);
 
                 // 真正有效的平滑缩放函数
                 const smoothFitView = (graph, duration = 800, easing = 'easeOutCubic') => {
@@ -1225,7 +1334,7 @@ Ref: posts.author_id > users.id
                             return;
                         }
 
-                        const { nodes, edges } = generateChenModelData(tables, relationships);
+                        const { nodes, edges } = generateChenModelData(tables, relationships, isColored);
                         
                         // Clear previous graph completely
                         if (graphRef.current) {
@@ -1367,6 +1476,9 @@ Ref: posts.author_id > users.id
                         // Set data and render
                         graph.data({ nodes, edges });
                         graph.render();
+                        
+                        // 应用初始样式
+                        updateGraphStyles(graph, isColored);
                         
                         // 初始渲染后使用平滑动画调整视图
                         setTimeout(() => {
@@ -1822,6 +1934,14 @@ Ref: posts.author_id > users.id
                                 <div className="glass-card">
                                     <div className="card-header">
                                         <h2 className="card-title">ER图预览</h2>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                            <span style={{ fontSize: '14px', color: 'rgba(45, 55, 72, 0.8)', fontWeight: 500 }}>着色</span>
+                                            <Switch 
+                                                checked={isColored} 
+                                                onChange={setIsColored} 
+                                                style={{ backgroundColor: isColored ? '#ff8a65' : '#bfbfbf' }}
+                                            />
+                                        </div>
                                     </div>
                                     <div className="card-content">
                                         {error && (
@@ -1869,6 +1989,9 @@ Ref: posts.author_id > users.id
                                     </div>
                                     <div className="feature-item">
                                         <strong>双击编辑：</strong>双击任意节点即可在原位置编辑内容
+                                    </div>
+                                    <div className="feature-item">
+                                        <strong>样式切换：</strong>右上角开关可切换彩色/黑白模式
                                     </div>
                                 </div>
                                 <p style={{ marginTop: '16px', fontSize: '0.9rem', color: '#6b7280' }}>

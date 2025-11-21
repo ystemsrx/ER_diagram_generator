@@ -501,6 +501,37 @@
             cursor: not-allowed;
             transform: none;
         }
+
+        /* 重新排布按钮样式（放在标题栏右侧的小按钮） */
+        .arrange-button {
+            height: 32px;
+            padding: 0 14px;
+            border: none;
+            border-radius: 999px;
+            background: linear-gradient(135deg, #ff6b6b 0%, #ff8a65 50%, #ffab40 100%);
+            color: #fff;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(255, 107, 107, 0.35);
+            transition: all 0.25s ease;
+        }
+
+        .arrange-button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(255, 107, 107, 0.45);
+        }
+
+        .arrange-button:active {
+            transform: translateY(0);
+        }
+
+        .arrange-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
     </style>
 </head>
 <body>
@@ -1305,6 +1336,46 @@ Ref: posts.author_id > users.id
                     }
                 };
 
+                // 基于目标坐标的节点平滑移动
+                const animateNodesToTargets = (graph, targets, duration = 800) => {
+                    if (!graph || graph.destroyed || !targets?.size) return;
+
+                    const startPositions = new Map();
+                    graph.getNodes().forEach(node => {
+                        const model = node.getModel();
+                        startPositions.set(model.id, { x: model.x, y: model.y });
+                    });
+
+                    const startTime = performance.now();
+                    graph.setAutoPaint(false);
+
+                    const step = (currentTime) => {
+                        if (!graph || graph.destroyed) return;
+                        const elapsed = currentTime - startTime;
+                        const rawProgress = Math.min(elapsed / duration, 1);
+                        const progress = 1 - Math.pow(1 - rawProgress, 3); // easeOutCubic
+
+                        targets.forEach((target, id) => {
+                            const node = graph.findById(id);
+                            if (!node) return;
+                            const start = startPositions.get(id) || target;
+                            const x = start.x + (target.x - start.x) * progress;
+                            const y = start.y + (target.y - start.y) * progress;
+                            graph.updateItem(node, { x, y });
+                        });
+
+                        graph.paint();
+
+                        if (rawProgress < 1) {
+                            requestAnimationFrame(step);
+                        } else {
+                            graph.setAutoPaint(true);
+                        }
+                    };
+
+                    requestAnimationFrame(step);
+                };
+
                 const handleGenerate = () => {
                     try {
                         setError(null);
@@ -1915,6 +1986,303 @@ Ref: posts.author_id > users.id
                     return () => window.removeEventListener('resize', handleResize);
                 }, []);
 
+                // 环绕排布：让属性均匀围绕实体，同时可移动实体以满足关系距离
+                const handleArrangeLayout = () => {
+                    if (!graphRef.current || graphRef.current.destroyed) return;
+                    const graph = graphRef.current;
+
+                    const nodes = graph.getNodes();
+                    if (!nodes.length) return;
+
+                    const targets = new Map();
+                    const nodeMap = new Map();
+                    nodes.forEach(n => nodeMap.set(n.getModel().id, n));
+
+                    const entityNodes = nodes.filter(n => n.getModel().nodeType === 'entity');
+                    const attributeNodes = nodes.filter(n => n.getModel().nodeType === 'attribute');
+                    const relationshipNodes = nodes.filter(n => n.getModel().nodeType === 'relationship');
+
+                    const getRadius = (node) => {
+                        const bbox = node.getBBox();
+                        return Math.max(bbox.width, bbox.height) / 2;
+                    };
+
+                    const normalizeAngle = (a) => {
+                        let angle = a % (Math.PI * 2);
+                        if (angle < 0) angle += Math.PI * 2;
+                        return angle;
+                    };
+
+                    // 建立关系节点与实体节点的对应
+                    const relationshipConnections = new Map(); // relId -> Set<entityNode>
+                    graph.getEdges().forEach(edge => {
+                        const { source, target } = edge.getModel();
+                        const sourceNode = nodeMap.get(source);
+                        const targetNode = nodeMap.get(target);
+                        if (!sourceNode || !targetNode) return;
+                        const sType = sourceNode.getModel().nodeType;
+                        const tType = targetNode.getModel().nodeType;
+                        if (sType === 'relationship' && tType === 'entity') {
+                            if (!relationshipConnections.has(source)) relationshipConnections.set(source, new Set());
+                            relationshipConnections.get(source).add(targetNode);
+                        } else if (tType === 'relationship' && sType === 'entity') {
+                            if (!relationshipConnections.has(target)) relationshipConnections.set(target, new Set());
+                            relationshipConnections.get(target).add(sourceNode);
+                        }
+                    });
+
+                    // 按实体收集属性与关系
+                    const entityInfo = new Map(); // entityId -> {node, attrs:[], rels:[]}
+                    entityNodes.forEach(e => entityInfo.set(e.getModel().id, { node: e, attrs: [], rels: [] }));
+                    attributeNodes.forEach(a => {
+                        const pid = a.getModel().parentEntity;
+                        const info = entityInfo.get(pid);
+                        if (info) info.attrs.push(a);
+                    });
+                    relationshipNodes.forEach(r => {
+                        const set = relationshipConnections.get(r.getModel().id);
+                        if (set) {
+                            const connected = Array.from(set);
+                            connected.forEach(entityNode => {
+                                const info = entityInfo.get(entityNode.getModel().id);
+                                if (!info) return;
+                                // 找到另一端实体
+                                const other = connected.find(n => n !== entityNode) || null;
+                                info.rels.push({ relNode: r, otherEntity: other });
+                            });
+                        }
+                    });
+
+                    // 当前实体坐标，可被迭代矫正
+                    const entityPositions = new Map();
+                    entityNodes.forEach(n => {
+                        const m = n.getModel();
+                        entityPositions.set(m.id, { x: m.x, y: m.y });
+                    });
+
+                    // 初步环半径，用于决定关系期望距离
+                    const baseRing = new Map();
+                    entityInfo.forEach(info => {
+                        const entityRadius = getRadius(info.node);
+                        const maxAttrRadius = info.attrs.length ? Math.max(...info.attrs.map(getRadius)) : 0;
+                        const maxRelRadius = info.rels.length ? Math.max(...info.rels.map(r => getRadius(r.relNode))) : 0;
+                        const base = entityRadius + Math.max(maxAttrRadius, maxRelRadius, 30) + 16;
+                        baseRing.set(info.node.getModel().id, base);
+                    });
+
+                    // 简单弹簧迭代，让实体距离约等于环半径之和
+                    const safeGap = 14;
+                    for (let iter = 0; iter < 40; iter++) {
+                        let maxMove = 0;
+                        relationshipNodes.forEach(relNode => {
+                            const relId = relNode.getModel().id;
+                            const connected = relationshipConnections.get(relId);
+                            if (!connected || connected.size !== 2) return;
+                            const [entityA, entityB] = Array.from(connected.values());
+                            const idA = entityA.getModel().id;
+                            const idB = entityB.getModel().id;
+                            const posA = entityPositions.get(idA);
+                            const posB = entityPositions.get(idB);
+                            if (!posA || !posB) return;
+
+                            const dx = posB.x - posA.x;
+                            const dy = posB.y - posA.y;
+                            const dist = Math.hypot(dx, dy) || 1;
+                            const desired = (baseRing.get(idA) || 80) + (baseRing.get(idB) || 80) + safeGap * 2;
+                            const diff = desired - dist;
+                            if (Math.abs(diff) < 0.5) return;
+
+                            const nx = dx / dist;
+                            const ny = dy / dist;
+                            const move = (diff * 0.35) / 2; // 0.35步进，双方各承担一半
+                            posA.x -= nx * move;
+                            posA.y -= ny * move;
+                            posB.x += nx * move;
+                            posB.y += ny * move;
+                            maxMove = Math.max(maxMove, Math.abs(move));
+                        });
+                        if (maxMove < 0.2) break;
+                    }
+
+                    // 实体目标位置
+                    entityPositions.forEach((pos, id) => targets.set(id, { ...pos }));
+
+                    const entityOrbitRadius = new Map();
+
+                    // 重新计算环、分配属性
+                    entityInfo.forEach(info => {
+                        const { node, attrs, rels } = info;
+                        const model = node.getModel();
+                        const center = entityPositions.get(model.id) || { x: model.x, y: model.y };
+                        const entityRadius = getRadius(node);
+
+                        if (!attrs.length && !rels.length) {
+                            entityOrbitRadius.set(model.id, baseRing.get(model.id) || entityRadius + 40);
+                            return;
+                        }
+
+                        // 关系方向角，用于留出安全缝隙避免线穿过属性
+                        const relationAngles = rels
+                            .map(r => {
+                                const otherNode = r.otherEntity;
+                                if (!otherNode) return null;
+                                const otherPos = entityPositions.get(otherNode.getModel().id);
+                                if (!otherPos) return null;
+                                return normalizeAngle(Math.atan2(otherPos.y - center.y, otherPos.x - center.x));
+                            })
+                            .filter(a => a !== null);
+
+                        // 安全角度留白
+                        const gapAngle = 0.35; // 约20度
+                        const halfGap = gapAngle / 2;
+
+                        // 计算可用的角度区间
+                        let segments = [];
+                        if (!relationAngles.length) {
+                            segments.push({ start: 0, end: Math.PI * 2 });
+                        } else {
+                            const sortedAngles = relationAngles.slice().sort((a, b) => a - b);
+                            const total = Math.PI * 2;
+                            for (let i = 0; i < sortedAngles.length; i++) {
+                                const curr = sortedAngles[i];
+                                const next = sortedAngles[(i + 1) % sortedAngles.length] + (i === sortedAngles.length - 1 ? total : 0);
+                                const start = curr + halfGap;
+                                const end = next - halfGap;
+                                if (end > start) segments.push({ start, end });
+                            }
+                        }
+
+                        // 若间隙被占满，退化为整圈
+                        const totalFree = segments.reduce((sum, s) => sum + (s.end - s.start), 0);
+                        if (totalFree <= 0) {
+                            segments = [{ start: 0, end: Math.PI * 2 }];
+                        }
+
+                        // 按当前角度排序属性，减少位移
+                        const sortedAttrs = attrs.slice().sort((a, b) => {
+                            const ma = a.getModel();
+                            const mb = b.getModel();
+                            const angleA = normalizeAngle(Math.atan2(ma.y - center.y, ma.x - center.x));
+                            const angleB = normalizeAngle(Math.atan2(mb.y - center.y, mb.x - center.x));
+                            return angleA - angleB;
+                        });
+
+                        const maxSatelliteRadius = Math.max(
+                            ...attrs.map(getRadius),
+                            rels.length ? Math.max(...rels.map(r => getRadius(r.relNode))) : 0,
+                            0
+                        );
+
+                        const baseDistance = entityRadius + maxSatelliteRadius + 16;
+
+                        // 分配每个区间的属性数量
+                        const attrCount = sortedAttrs.length;
+                        const segCounts = segments.map(() => 0);
+                        let remaining = attrCount;
+                        const freeAngle = segments.reduce((sum, s) => sum + (s.end - s.start), 0);
+
+                        segments.forEach((s, idx) => {
+                            if (idx === segments.length - 1) {
+                                segCounts[idx] = remaining;
+                                remaining = 0;
+                            } else {
+                                const share = attrCount * ((s.end - s.start) / freeAngle);
+                                const count = Math.min(remaining, Math.max(0, Math.floor(share)));
+                                segCounts[idx] = count;
+                                remaining -= count;
+                            }
+                        });
+                        while (remaining > 0) {
+                            let maxIdx = 0;
+                            let maxLen = -Infinity;
+                            segments.forEach((s, idx) => {
+                                const len = s.end - s.start;
+                                if (len > maxLen) {
+                                    maxLen = len;
+                                    maxIdx = idx;
+                                }
+                            });
+                            segCounts[maxIdx] += 1;
+                            remaining -= 1;
+                        }
+
+                        // 计算避免重叠所需的最小半径
+                        let requiredDistance = baseDistance;
+                        segments.forEach((s, idx) => {
+                            const count = segCounts[idx];
+                            if (count <= 1) return;
+                            const angleStep = (s.end - s.start) / count;
+                            const minChord = 2 * maxSatelliteRadius + 12;
+                            const dist = minChord / (2 * Math.sin(Math.max(0.05, angleStep) / 2));
+                            requiredDistance = Math.max(requiredDistance, dist);
+                        });
+
+                        const ringRadius = requiredDistance;
+                        entityOrbitRadius.set(model.id, ringRadius);
+
+                        // 在区间内平均布点
+                        let attrIdx = 0;
+                        segments.forEach((s, idx) => {
+                            const count = segCounts[idx];
+                            if (!count) return;
+                            const step = (s.end - s.start) / count;
+                            for (let i = 0; i < count; i++) {
+                                const angle = s.start + step * (i + 0.5);
+                                const useAngle = normalizeAngle(angle);
+                                const targetX = center.x + ringRadius * Math.cos(useAngle);
+                                const targetY = center.y + ringRadius * Math.sin(useAngle);
+                                const attrNode = sortedAttrs[attrIdx++];
+                                if (attrNode) {
+                                    targets.set(attrNode.getModel().id, { x: targetX, y: targetY });
+                                }
+                            }
+                        });
+                    });
+
+                    // 关系节点：沿实体连线分布，距离等于两端实体环距（按比例压缩以避免互撞）
+                    relationshipNodes.forEach(relNode => {
+                        const relId = relNode.getModel().id;
+                        const connectedEntities = relationshipConnections.get(relId);
+
+                        if (connectedEntities && connectedEntities.size === 2) {
+                            const [entityA, entityB] = Array.from(connectedEntities.values());
+                            const idA = entityA.getModel().id;
+                            const idB = entityB.getModel().id;
+                            const posA = entityPositions.get(idA);
+                            const posB = entityPositions.get(idB);
+                            if (!posA || !posB) return;
+                            const dist = Math.hypot(posB.x - posA.x, posB.y - posA.y);
+                            if (dist < 1e-6) return;
+
+                            const rA = entityOrbitRadius.get(idA) || baseRing.get(idA) || 40;
+                            const rB = entityOrbitRadius.get(idB) || baseRing.get(idB) || 40;
+                            const sumR = rA + rB;
+                            const scale = sumR > 0 ? Math.min(1, Math.max(0, (dist - safeGap) / sumR)) : 1;
+                            const dA = rA * scale;
+
+                            const ratio = dA / dist;
+                            const targetPos = {
+                                x: posA.x + ratio * (posB.x - posA.x),
+                                y: posA.y + ratio * (posB.y - posA.y)
+                            };
+                            targets.set(relId, targetPos);
+                        } else if (connectedEntities && connectedEntities.size === 1) {
+                            // 单实体关系，像属性一样放在环上
+                            const [entity] = Array.from(connectedEntities.values());
+                            const m = entity.getModel();
+                            const center = entityPositions.get(m.id) || { x: m.x, y: m.y };
+                            const ring = entityOrbitRadius.get(m.id) || baseRing.get(m.id) || 60;
+                            const angle = normalizeAngle(Math.atan2(relNode.getModel().y - center.y, relNode.getModel().x - center.x));
+                            targets.set(relId, {
+                                x: center.x + ring * Math.cos(angle),
+                                y: center.y + ring * Math.sin(angle)
+                            });
+                        }
+                    });
+
+                    animateNodesToTargets(graph, targets, 850);
+                };
+
                 return (
                     <React.Fragment>
                         <div className="main-content">
@@ -1961,6 +2329,13 @@ Ref: posts.author_id > users.id
                                                 onChange={setIsColored} 
                                                 style={{ backgroundColor: isColored ? '#ff8a65' : '#bfbfbf' }}
                                             />
+                                            <button 
+                                                className="arrange-button" 
+                                                onClick={handleArrangeLayout}
+                                                disabled={!hasGraph || loading}
+                                            >
+                                                紧凑排布
+                                            </button>
                                         </div>
                                     </div>
                                     <div className="card-content">

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,268 +10,291 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css" />
     <style>
+        :root {
+            --primary: #0f172a;
+            --primary-light: #334155;
+            --secondary: #64748b;
+            --accent: #0ea5e9;
+            /* Sky 500 */
+            --accent-hover: #0284c7;
+            --accent-gradient: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%);
+            --success: #10b981;
+            --bg-page: #f8fafc;
+            --bg-card: rgba(255, 255, 255, 0.7);
+            --border: rgba(226, 232, 240, 0.8);
+            --glass-border: 1px solid rgba(255, 255, 255, 0.6);
+            --glass-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.05);
+            --text-main: #1e293b;
+            --text-sub: #64748b;
+            --radius-lg: 24px;
+            --radius-md: 16px;
+            --radius-sm: 12px;
+            --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            --font-mono: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+        }
+
         * {
             box-sizing: border-box;
+            outline: none;
         }
 
         body {
-            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 25%, #fecfef 50%, #ffecd2 75%, #fcb69f 100%);
+            background-color: var(--bg-page);
+            background-image:
+                radial-gradient(circle at 0% 0%, rgba(14, 165, 233, 0.08) 0%, transparent 50%),
+                radial-gradient(circle at 100% 100%, rgba(99, 102, 241, 0.08) 0%, transparent 50%);
+            background-attachment: fixed;
+            color: var(--text-main);
+            font-family: var(--font-sans);
             min-height: 100vh;
             margin: 0;
             padding: 0;
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            color: #2d3748;
-            position: relative;
-        }
-
-        body::before {
-            content: '';
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: 
-                radial-gradient(circle at 20% 80%, rgba(255, 154, 158, 0.3) 0%, transparent 50%),
-                radial-gradient(circle at 80% 20%, rgba(252, 182, 159, 0.3) 0%, transparent 50%),
-                radial-gradient(circle at 40% 40%, rgba(254, 207, 239, 0.2) 0%, transparent 50%);
-            pointer-events: none;
-            z-index: -1;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
         }
 
         .app-container {
-            min-height: 100vh;
-            padding: 24px;
-            background: rgba(255, 255, 255, 0.1);
-            -webkit-backdrop-filter: blur(20px);
-            backdrop-filter: blur(20px);
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 40px 32px;
         }
 
         .header {
             text-align: center;
-            margin-bottom: 32px;
-            padding: 24px 0;
+            margin-bottom: 60px;
+            animation: fadeInDown 1s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         .header h1 {
-            font-size: 2.5rem;
-            font-weight: 700;
-            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 25%, #ff8a65 75%, #ffab40 100%);
+            font-size: 3.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #0f172a 0%, #334155 100%);
             -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
             background-clip: text;
-            margin: 0;
-            text-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            filter: drop-shadow(0 2px 4px rgba(255, 107, 107, 0.3));
+            -webkit-text-fill-color: transparent;
+            margin: 0 0 16px 0;
+            letter-spacing: -0.03em;
+            line-height: 1.1;
         }
 
         .header p {
-            font-size: 1.1rem;
-            color: rgba(45, 55, 72, 0.8);
-            margin: 8px 0 0 0;
+            font-size: 1.25rem;
+            color: var(--text-sub);
+            margin: 0;
             font-weight: 400;
-            text-shadow: 0 1px 2px rgba(255, 255, 255, 0.5);
-        }
-
-        #root {
-            max-width: 1400px;
-            margin: 0 auto;
-            width: 100%;
+            opacity: 0.8;
         }
 
         .main-content {
-            display: flex;
-            gap: 24px;
+            display: grid;
+            grid-template-columns: 420px 1fr;
+            gap: 32px;
             align-items: stretch;
+            animation: fadeInUp 1s cubic-bezier(0.16, 1, 0.3, 1) 0.2s backwards;
         }
 
-        .input-section {
-            flex: 1;
-            min-width: 400px;
-        }
-
-        .output-section {
-            flex: 2;
-            min-width: 600px;
-        }
-
-        .glass-card {
-            background: rgba(255, 255, 255, 0.25);
-            -webkit-backdrop-filter: blur(30px);
-            backdrop-filter: blur(30px);
-            border: 1px solid rgba(255, 255, 255, 0.4);
-            border-radius: 20px;
-            box-shadow: 
-                0 8px 32px rgba(255, 107, 107, 0.1),
-                0 4px 16px rgba(252, 182, 159, 0.1),
-                inset 0 1px 0 rgba(255, 255, 255, 0.4);
-            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-            height: 100%;
+        .card {
+            background: var(--bg-card);
+            -webkit-backdrop-filter: blur(20px);
+            backdrop-filter: blur(20px);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--glass-shadow);
+            border: var(--glass-border);
+            overflow: hidden;
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s ease;
             display: flex;
             flex-direction: column;
-            position: relative;
-            overflow: hidden;
+            height: 100%;
         }
 
-        .glass-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 1px;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
-        }
-
-        .glass-card:hover {
+        .card:hover {
+            box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.08);
             transform: translateY(-4px);
-            box-shadow: 
-                0 16px 48px rgba(255, 107, 107, 0.15),
-                0 8px 24px rgba(252, 182, 159, 0.15),
-                inset 0 1px 0 rgba(255, 255, 255, 0.5);
-            border-color: rgba(255, 255, 255, 0.6);
         }
 
         .card-header {
-            padding: 24px 24px 16px 24px;
-            border-bottom: 1px solid rgba(255, 107, 107, 0.2);
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 154, 158, 0.05) 100%);
+            padding: 24px 32px;
+            border-bottom: 1px solid rgba(226, 232, 240, 0.6);
             display: flex;
             justify-content: space-between;
             align-items: center;
+            background: rgba(255, 255, 255, 0.4);
         }
 
         .card-title {
-            font-size: 1.4rem;
-            font-weight: 600;
-            color: #2d3748;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--primary);
             margin: 0;
             display: flex;
             align-items: center;
-            gap: 8px;
-            text-shadow: 0 1px 2px rgba(255, 255, 255, 0.5);
-        }
-
-        .card-title::before {
-            content: "";
-            width: 4px;
-            height: 20px;
-            background: linear-gradient(135deg, #ff6b6b 0%, #ff8a65 50%, #ffab40 100%);
-            border-radius: 2px;
-            box-shadow: 0 2px 4px rgba(255, 107, 107, 0.3);
+            gap: 10px;
+            letter-spacing: -0.01em;
         }
 
         .card-content {
-            padding: 24px;
+            padding: 32px;
             flex: 1;
             display: flex;
             flex-direction: column;
+            gap: 24px;
         }
 
         .input-textarea {
             width: 100%;
-            min-height: 500px;
-            border: 2px solid rgba(255, 107, 107, 0.2);
-            border-radius: 16px;
-            padding: 16px;
-            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            min-height: 480px;
+            border: 1px solid transparent;
+            border-radius: var(--radius-md);
+            padding: 20px;
+            font-family: var(--font-mono);
             font-size: 14px;
             line-height: 1.6;
-            background: rgba(255, 255, 255, 0.6);
-            -webkit-backdrop-filter: blur(10px);
-            backdrop-filter: blur(10px);
-            color: #2d3748;
+            background: #fff;
+            color: var(--text-main);
             resize: none;
-            transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            transition: all 0.3s ease;
             flex: 1;
-            box-shadow: inset 0 2px 4px rgba(255, 107, 107, 0.1);
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.02);
         }
 
         .input-textarea:focus {
             outline: none;
-            border-color: #ff8a65;
-            box-shadow: 
-                0 0 0 3px rgba(255, 138, 101, 0.2),
-                inset 0 2px 4px rgba(255, 107, 107, 0.1);
-            background: rgba(255, 255, 255, 0.8);
+            background: #fff;
+            box-shadow: 0 0 0 4px rgba(14, 165, 233, 0.1), inset 0 2px 4px rgba(0, 0, 0, 0.02);
         }
 
-        .generate-button {
-            width: 100%;
+        .btn {
             height: 48px;
             border: none;
-            border-radius: 16px;
-            background: linear-gradient(135deg, #ff6b6b 0%, #ff8a65 25%, #ffab40 75%, #ffa726 100%);
-            color: white;
-            font-size: 16px;
+            border-radius: 9999px;
+            font-size: 15px;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-            margin-top: 16px;
-            box-shadow: 
-                0 4px 16px rgba(255, 107, 107, 0.4),
-                0 2px 8px rgba(255, 138, 101, 0.2);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .generate-button::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
             width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-            transition: left 0.5s ease;
+            letter-spacing: 0.01em;
         }
 
-        .generate-button:hover::before {
-            left: 100%;
+        .btn-primary {
+            background: var(--accent-gradient);
+            color: white;
+            box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);
         }
 
-        .generate-button:hover {
-            transform: translateY(-3px);
-            box-shadow: 
-                0 8px 24px rgba(255, 107, 107, 0.5),
-                0 4px 12px rgba(255, 138, 101, 0.3);
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(14, 165, 233, 0.4);
         }
 
-        .generate-button:active {
+        .btn-primary:active {
             transform: translateY(0);
         }
 
-        .generate-button:disabled {
-            opacity: 0.6;
+        .btn-primary:disabled {
+            opacity: 0.7;
             cursor: not-allowed;
             transform: none;
+            box-shadow: none;
         }
 
-        /* 按钮容器样式 */
-        .button-container {
-            display: flex;
-            gap: 12px;
-            margin-top: 16px;
+        .btn-secondary {
+            background: white;
+            color: var(--text-main);
+            border: 1px solid var(--border);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
         }
 
-        .button-container .generate-button,
-        .button-container .export-button {
-            margin-top: 0;
-            flex: 1;
+        .btn-secondary:hover {
+            background: #f8fafc;
+            border-color: #cbd5e1;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .btn-sm {
+            height: 36px;
+            padding: 0 20px;
+            font-size: 13px;
+            border-radius: 9999px;
+            width: auto;
+        }
+
+        .btn-accent {
+            background: rgba(14, 165, 233, 0.1);
+            color: var(--accent);
+            border: 1px solid rgba(14, 165, 233, 0.2);
+        }
+
+        .btn-accent:hover {
+            background: rgba(14, 165, 233, 0.15);
+            transform: translateY(-1px);
         }
 
         .diagram-container {
             width: 100%;
-            height: 600px;
-            border: 2px solid rgba(255, 107, 107, 0.2);
-            border-radius: 16px;
-            background: #ffffff;
+            flex: 1;
+            min-height: 600px;
+            background-color: #ffffff;
+            background-image: radial-gradient(#cbd5e1 1.5px, transparent 1.5px);
+            background-size: 24px 24px;
+            border-radius: var(--radius-md);
             position: relative;
             overflow: hidden;
-            box-shadow: 
-                inset 0 2px 4px rgba(255, 107, 107, 0.1),
-                0 4px 12px rgba(0, 0, 0, 0.05);
+            border: 1px solid rgba(226, 232, 240, 0.6);
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.01);
+            transition: background-image 0.3s ease;
+        }
+
+        .diagram-container.no-grid {
+            background-image: none;
+        }
+
+        .background-toggle {
+            position: absolute;
+            top: 16px;
+            left: 16px;
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border-radius: 50%;
+            border: 1px solid rgba(226, 232, 240, 0.6);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 100;
+        }
+
+        .background-toggle:hover {
+            background: rgba(255, 255, 255, 1);
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .background-toggle i {
+            font-size: 18px;
+            color: var(--accent);
+            transition: color 0.3s ease;
+        }
+
+        .background-toggle:hover i {
+            color: var(--accent-hover);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 16px;
+            margin-top: auto;
         }
 
         .loading-overlay {
@@ -279,261 +303,340 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: rgba(255, 255, 255, 0.9);
+            background: rgba(255, 255, 255, 0.8);
             display: flex;
             justify-content: center;
             align-items: center;
             z-index: 10;
-        }
-
-        .error-message {
-            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
-            color: white;
-            padding: 16px;
-            border-radius: 16px;
-            margin-bottom: 16px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            box-shadow: 
-                0 4px 16px rgba(255, 107, 107, 0.4),
-                inset 0 1px 0 rgba(255, 255, 255, 0.2);
-            -webkit-backdrop-filter: blur(10px);
-            backdrop-filter: blur(10px);
-        }
-
-        .info-section {
-            margin-top: 24px;
-            padding: 20px;
-            background: rgba(255, 255, 255, 0.3);
-            -webkit-backdrop-filter: blur(15px);
-            backdrop-filter: blur(15px);
-            border-radius: 16px;
-            border: 1px solid rgba(255, 107, 107, 0.2);
-            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3);
-        }
-
-        .info-section h3 {
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: #2d3748;
-            margin: 0 0 12px 0;
-            text-shadow: 0 1px 2px rgba(255, 255, 255, 0.5);
-        }
-
-        .info-section p {
-            font-size: 0.9rem;
-            color: #4a5568;
-            margin: 4px 0;
-            line-height: 1.5;
-        }
-
-        .info-section p strong {
-            color: #2d3748;
-            font-weight: 600;
-        }
-
-        .feature-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 12px;
-            margin-top: 16px;
-        }
-
-        .feature-item {
-            background: rgba(255, 255, 255, 0.4);
-            -webkit-backdrop-filter: blur(10px);
-            backdrop-filter: blur(10px);
-            padding: 12px;
-            border-radius: 12px;
-            border: 1px solid rgba(255, 154, 158, 0.3);
-            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
+            -webkit-backdrop-filter: blur(4px);
+            backdrop-filter: blur(4px);
             transition: all 0.3s ease;
         }
 
-        .feature-item:hover {
+        .spinner {
+            width: 48px;
+            height: 48px;
+            border: 4px solid rgba(14, 165, 233, 0.1);
+            border-radius: 50%;
+            border-top-color: var(--accent);
+            animation: spin 1s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+        }
+
+        .error-message {
+            background: #fef2f2;
+            color: #ef4444;
+            padding: 16px 20px;
+            border-radius: var(--radius-md);
+            margin-bottom: 20px;
+            border: 1px solid #fee2e2;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
             background: rgba(255, 255, 255, 0.5);
-            border-color: rgba(255, 138, 101, 0.4);
+            border-radius: 20px;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            font-size: 0.85rem;
+            color: var(--text-sub);
+            transition: all 0.2s ease;
+        }
+
+        .legend-item:hover {
+            background: #fff;
             transform: translateY(-1px);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.03);
         }
 
-        .feature-item strong {
-            color: #e53e3e;
-            font-weight: 600;
+        @keyframes fadeInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
-        /* 响应式设计 */
-        @media (max-width: 1024px) {
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Tablet and below */
+        @media (max-width: 1200px) {
             .main-content {
-                flex-direction: column;
-            }
-
-            .input-section, .output-section {
-                min-width: unset;
-            }
-
-            .header h1 {
-                font-size: 2rem;
+                grid-template-columns: 1fr;
             }
 
             .app-container {
-                padding: 16px;
+                padding: 24px;
             }
         }
 
+        /* Mobile and small tablets */
         @media (max-width: 768px) {
+            .app-container {
+                padding: 16px;
+            }
+
+            .header {
+                margin-bottom: 32px;
+            }
+
             .header h1 {
-                font-size: 1.8rem;
+                font-size: 2.5rem;
+            }
+
+            .header p {
+                font-size: 1rem;
+            }
+
+            .main-content {
+                gap: 20px;
+            }
+
+            .card-header {
+                padding: 16px 20px;
+            }
+
+            .card-content {
+                padding: 20px;
+                gap: 16px;
+            }
+
+            .card-title {
+                font-size: 1rem;
+            }
+
+            .input-textarea {
+                min-height: 250px;
+                padding: 16px;
+                font-size: 13px;
+            }
+
+            .CodeMirror {
+                height: 300px !important;
+                font-size: 13px;
+            }
+
+            .button-group {
+                gap: 10px;
+            }
+
+            .btn {
+                height: 44px;
+                font-size: 13px;
+            }
+
+            .btn-sm {
+                height: 38px;
+                font-size: 13px;
+            }
+
+            .diagram-container {
+                min-height: 400px;
+                border-radius: var(--radius-md);
+            }
+        }
+
+        /* Small mobile phones */
+        @media (max-width: 480px) {
+            .app-container {
+                padding: 12px;
+            }
+
+            .header {
+                margin-bottom: 24px;
+            }
+
+            .header h1 {
+                font-size: 1.75rem;
+                letter-spacing: -0.02em;
+            }
+
+            .header p {
+                font-size: 0.875rem;
+            }
+
+            .main-content {
+                gap: 16px;
+            }
+
+            .card {
+                border-radius: var(--radius-md);
+            }
+
+            .card-header {
+                padding: 12px 16px;
             }
 
             .card-content {
                 padding: 16px;
+                gap: 12px;
+            }
+
+            /* 隐藏ER预览区的提示文本和分隔符 */
+            .card-header>div:last-child>div:first-child {
+                display: none !important;
+            }
+
+            .card-header>div:last-child .ant-switch {
+                transform: scale(0.85);
+            }
+
+            /* 手机版隐藏图例 */
+            .output-section .card-header>div:first-child {
+                display: none !important;
+            }
+
+            /* 手机版控制区域居中 */
+            .output-section .card-header {
+                justify-content: center !important;
+            }
+
+            .output-section .card-header>div:last-child {
+                margin: 0 !important;
+                flex-wrap: wrap;
+                gap: 8px !important;
+                justify-content: center;
+            }
+
+            .card-title {
+                font-size: 0.9rem;
+            }
+
+            .card-title span {
+                font-size: 1.2rem !important;
             }
 
             .input-textarea {
-                min-height: 400px;
+                min-height: 200px;
+                padding: 12px;
+                font-size: 12px;
+            }
+
+            .CodeMirror {
+                height: 250px !important;
+                font-size: 12px;
+            }
+
+            .button-group {
+                gap: 8px;
+            }
+
+            .btn {
+                height: 40px;
+                font-size: 12px;
+                padding: 0 12px;
+            }
+
+            .btn-sm {
+                height: 32px;
+                font-size: 11px;
+                padding: 0 10px;
+                gap: 4px;
             }
 
             .diagram-container {
-                height: 500px;
+                min-height: 300px;
+                border-radius: 12px;
+                background-size: 16px 16px;
+            }
+
+            .legend-item {
+                font-size: 0.75rem;
+                padding: 4px 10px;
+            }
+
+            .error-message {
+                padding: 12px 16px;
+                font-size: 0.875rem;
+            }
+
+            /* 隐藏ER预览标头中的提示文本和分隔符 */
+            .output-section .card-header>div:last-child>div:first-child,
+            .output-section .card-header>div:last-child>div:nth-child(2) {
+                display: none;
+            }
+
+            /* 手机版隐藏图例 */
+            .output-section .card-header>div:first-child {
+                display: none !important;
+            }
+
+            /* 手机版控制区域居中 */
+            .output-section .card-header {
+                justify-content: center !important;
+            }
+
+            .output-section .card-header>div:last-child {
+                margin: 0 !important;
+                flex-wrap: wrap;
+                gap: 8px !important;
+                justify-content: center;
             }
         }
 
-        /* 自定义滚动条 */
+        .CodeMirror {
+            height: 480px !important;
+            font-family: var(--font-mono) !important;
+            font-size: 14px;
+            line-height: 1.6;
+            background: #fff;
+        }
+
+        .CodeMirror-gutters {
+            background: #f8fafc;
+            border-right: 1px solid #e2e8f0;
+        }
+
+        .CodeMirror-linenumber {
+            color: #94a3b8;
+        }
+
+        /* Scrollbar */
         ::-webkit-scrollbar {
             width: 8px;
             height: 8px;
         }
 
         ::-webkit-scrollbar-track {
-            background: rgba(0, 0, 0, 0.05);
-            border-radius: 4px;
+            background: transparent;
         }
 
         ::-webkit-scrollbar-thumb {
-            background: rgba(255, 107, 107, 0.5);
+            background: #cbd5e1;
             border-radius: 4px;
         }
 
         ::-webkit-scrollbar-thumb:hover {
-            background: rgba(255, 107, 107, 0.7);
-        }
-
-        /* 加载动画 */
-        .loading-spinner {
-            width: 40px;
-            height: 40px;
-            border: 4px solid rgba(255, 107, 107, 0.2);
-            border-top: 4px solid #ff6b6b;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        /* 按钮加载状态 */
-        .generate-button.loading {
-            pointer-events: none;
-            opacity: 0.8;
-        }
-
-        .generate-button.loading::after {
-            content: "";
-            display: inline-block;
-            width: 16px;
-            height: 16px;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            border-top: 2px solid white;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-left: 8px;
-        }
-
-        /* 导出按钮样式 */
-        .export-button {
-            width: 100%;
-            height: 48px;
-            border: none;
-            border-radius: 16px;
-            background: linear-gradient(135deg, #4CAF50 0%, #66BB6A 25%, #81C784 75%, #A5D6A7 100%);
-            color: white;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-            margin-top: 16px;
-            box-shadow: 
-                0 4px 16px rgba(76, 175, 80, 0.4),
-                0 2px 8px rgba(102, 187, 106, 0.2);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .export-button::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-            transition: left 0.5s ease;
-        }
-
-        .export-button:hover::before {
-            left: 100%;
-        }
-
-        .export-button:hover {
-            transform: translateY(-3px);
-            box-shadow: 
-                0 8px 24px rgba(76, 175, 80, 0.5),
-                0 4px 12px rgba(102, 187, 106, 0.3);
-        }
-
-        .export-button:active {
-            transform: translateY(0);
-        }
-
-        .export-button:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        /* 重新排布按钮样式（放在标题栏右侧的小按钮） */
-        .arrange-button {
-            height: 32px;
-            padding: 0 14px;
-            border: none;
-            border-radius: 999px;
-            background: linear-gradient(135deg, #ff6b6b 0%, #ff8a65 50%, #ffab40 100%);
-            color: #fff;
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            box-shadow: 0 4px 12px rgba(255, 107, 107, 0.35);
-            transition: all 0.25s ease;
-        }
-
-        .arrange-button:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 6px 16px rgba(255, 107, 107, 0.45);
-        }
-
-        .arrange-button:active {
-            transform: translateY(0);
-        }
-
-        .arrange-button:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none;
-            box-shadow: none;
+            background: #94a3b8;
         }
     </style>
 </head>
+
 <body>
     <div class="app-container">
         <div class="header">
@@ -551,7 +654,13 @@
     <script src="https://unpkg.com/dayjs@1.11.10/dayjs.min.js"></script>
     <script src="https://unpkg.com/antd@5.19.1/dist/antd.min.js"></script>
     <script src="https://unpkg.com/@antv/g6@4.8.24/dist/g6.min.js"></script>
-    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/sql/sql.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/display/placeholder.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/matchbrackets.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closebrackets.min.js"></script>
+
     <!-- Main Application Script -->
     <script type="text/babel">
         window.addEventListener('load', () => {
@@ -563,7 +672,7 @@
             const parseSQLTables = (sql) => {
                 const tables = [];
                 const relationships = [];
-                
+
                 // Remove comments and normalize whitespace
                 const cleanSql = sql
                     .replace(/--.*$/gm, '')
@@ -583,7 +692,7 @@
                     // Extract table name
                     const tableNameMatch = statement.match(/CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?\`?([\w\u4e00-\u9fa5]+)\`?/i);
                     if (!tableNameMatch) return;
-                    
+
                     const tableName = tableNameMatch[1];
 
                     // Manually find the content within the main parentheses to avoid complex regex
@@ -610,7 +719,7 @@
                     }
 
                     const tableBody = statement.substring(openParenIndex + 1, closeParenIndex);
-                    
+
                     const columns = [];
                     const primaryKeys = [];
                     const foreignKeys = [];
@@ -619,7 +728,7 @@
                     const parts = [];
                     let currentPart = '';
                     let depth = 0;
-                    
+
                     for (let i = 0; i < tableBody.length; i++) {
                         const char = tableBody[i];
                         if (char === '(') depth++;
@@ -636,7 +745,7 @@
                     parts.forEach(part => {
                         const trimmedPart = part.trim().replace(/,\s*$/, ''); // Clean trailing commas
                         if (!trimmedPart) return;
-                        
+
                         // Check for PRIMARY KEY constraint at the table level
                         if (/^PRIMARY\s+KEY\s*\((.*)\)/i.test(trimmedPart)) {
                             const pkMatch = trimmedPart.match(/^PRIMARY\s+KEY\s*\((.*)\)/i);
@@ -663,12 +772,12 @@
                                 const columnName = columnMatch[1].replace(/`/g, '');
                                 const dataType = columnMatch[2];
                                 const constraints = columnMatch[3] || '';
-                                
+
                                 const isPrimaryKey = /PRIMARY\s+KEY/i.test(constraints);
                                 if (isPrimaryKey) {
                                     primaryKeys.push(columnName);
                                 }
-                                
+
                                 columns.push({
                                     name: columnName,
                                     type: dataType,
@@ -722,7 +831,7 @@
 
                     tableBody.split('\n').forEach(line => {
                         if (!line.trim()) return;
-                        
+
                         // Match `column_name` type [attributes]
                         const columnMatch = line.trim().match(/^`?([\w\u4e00-\u9fa5]+)`?\s+([\w\d\(\)\s,]+)(?:\s*\[([^\]]*)\])?/);
 
@@ -730,9 +839,9 @@
                             const columnName = columnMatch[1];
                             const columnType = columnMatch[2].trim();
                             const attributesStr = columnMatch[3] || '';
-                            
+
                             const isPrimaryKey = attributesStr.includes('pk') || attributesStr.includes('primary key');
-                            
+
                             if (isPrimaryKey) {
                                 primaryKeys.push(columnName);
                             }
@@ -776,7 +885,7 @@
                 // 支持中文表名和列名的 Ref 语句
                 const refRegex = /Ref\s*:\s*`?([\w\u4e00-\u9fa5]+)`?\.`?([\w\u4e00-\u9fa5]+)`?\s*[-><]\s*`?([\w\u4e00-\u9fa5]+)`?\.`?([\w\u4e00-\u9fa5]+)`?/g;
                 let refMatch;
-                
+
                 while ((refMatch = refRegex.exec(cleanDbml)) !== null) {
                     const fromTable = refMatch[1];
                     const fromColumn = refMatch[2];
@@ -788,7 +897,7 @@
                         to: toTable,
                         label: fromColumn
                     });
-                    
+
                     const table = tables.find(t => t.name === fromTable);
                     if (table) {
                         if (!table.foreignKeys) {
@@ -813,13 +922,12 @@
 
                 // Create entity nodes (rectangles) - 不设置固定位置，让布局算法处理
                 tables.forEach((table, tableIndex) => {
-                    const timestamp = Date.now();
-                    const entityId = `entity-${table.name}-${timestamp}-${tableIndex}`;
+                    const entityId = `entity-${table.name}-${tableIndex}`;
                     entityMap.set(table.name, entityId); // 记录映射关系
                     if (table.alias) {
                         entityMap.set(table.alias, entityId);
                     }
-                    
+
                     nodes.push({
                         id: entityId,
                         type: 'entity',
@@ -842,9 +950,9 @@
 
                     // Create attribute nodes (ellipses) for each column
                     table.columns.forEach((column, colIndex) => {
-                        const attributeId = `attr-${table.name}-${column.name}-${Date.now()}-${colIndex}`;
+                        const attributeId = `attr-${table.name}-${column.name}-${tableIndex}-${colIndex}`;
                         const isPrimaryKey = table.primaryKeys.includes(column.name) || column.isPrimaryKey;
-                        
+
                         nodes.push({
                             id: attributeId,
                             type: 'attribute',
@@ -868,7 +976,7 @@
 
                         // Connect attribute to entity
                         edges.push({
-                            id: `edge-${entityId}-${attributeId}-${Date.now()}-${colIndex}`,
+                            id: `edge-${entityId}-${attributeId}-${tableIndex}-${colIndex}`,
                             source: entityId,
                             target: attributeId,
                             style: {
@@ -881,9 +989,8 @@
 
                 // Create relationship nodes (diamonds) and connections
                 relationships.forEach((rel, relIndex) => {
-                    const timestamp = Date.now();
-                    const relationshipId = `rel-${rel.from}-${rel.to}-${rel.label}-${timestamp}`;
-                    
+                    const relationshipId = `rel-${rel.from}-${rel.to}-${rel.label}-${relIndex}`;
+
                     nodes.push({
                         id: relationshipId,
                         type: 'relationship',
@@ -903,7 +1010,7 @@
 
                     // Connect source entity (the one with the FK, 'many' side) to relationship
                     edges.push({
-                        id: `edge-entity-${rel.from}-${relationshipId}-${timestamp}-1`,
+                        id: `edge-entity-${rel.from}-${relationshipId}-${relIndex}-1`,
                         source: entityMap.get(rel.from),
                         target: relationshipId,
                         label: 'N',
@@ -925,7 +1032,7 @@
 
                     // Connect relationship to target entity (the one being referenced, 'one' side)
                     edges.push({
-                        id: `edge-${relationshipId}-entity-${rel.to}-${timestamp}-2`,
+                        id: `edge-${relationshipId}-entity-${rel.to}-${relIndex}-2`,
                         source: relationshipId,
                         target: entityMap.get(rel.to),
                         label: '1',
@@ -954,7 +1061,7 @@
                 draw(cfg, group) {
                     const fontSize = 18;
                     const text = cfg.label || '';
-                    
+
                     // 计算文字尺寸，考虑中文字符
                     const getTextWidth = (text, fontSize) => {
                         let width = 0;
@@ -968,19 +1075,19 @@
                         }
                         return width;
                     };
-                    
+
                     const textWidth = getTextWidth(text, fontSize);
                     const padding = 10; // 水平内边距，从20减小到10
                     const minWidth = 80; // 最小宽度
                     const minHeight = 50; // 最小高度
-                    
+
                     const width = Math.max(minWidth, textWidth + padding * 2);
                     const height = Math.max(minHeight, fontSize + 20); // 垂直内边距
-                    
+
                     const shape = group.addShape('rect', {
                         attrs: {
-                            x: -width/2,
-                            y: -height/2,
+                            x: -width / 2,
+                            y: -height / 2,
                             width: width,
                             height: height,
                             fill: cfg.style?.fill || '#fff',
@@ -1006,7 +1113,7 @@
                             capture: false
                         });
                     }
-                    
+
                     return shape;
                 }
             });
@@ -1015,7 +1122,7 @@
                 draw(cfg, group) {
                     const fontSize = 15;
                     const text = cfg.label || '';
-                    
+
                     // 计算文字尺寸，考虑中文字符
                     const getTextWidth = (text, fontSize) => {
                         let width = 0;
@@ -1029,21 +1136,21 @@
                         }
                         return width;
                     };
-                    
+
                     const textWidth = getTextWidth(text, fontSize);
                     const padding = 16; // 水平内边距
                     const minWidth = 60; // 最小宽度
                     const minHeight = 40; // 最小高度
-                    
+
                     const width = Math.max(minWidth, textWidth + padding * 2);
                     const height = Math.max(minHeight, fontSize + 16); // 垂直内边距
-                    
+
                     const shape = group.addShape('ellipse', {
                         attrs: {
                             x: 0,
                             y: 0,
-                            rx: width/2,
-                            ry: height/2,
+                            rx: width / 2,
+                            ry: height / 2,
                             fill: cfg.style?.fill || '#fff',
                             stroke: cfg.style?.stroke || '#000',
                             lineWidth: cfg.style?.lineWidth || 1
@@ -1073,9 +1180,9 @@
                             const textWidth = getTextWidth(text, fontSize); // 使用精确的文字宽度计算
                             group.addShape('line', {
                                 attrs: {
-                                    x1: -textWidth/2,
+                                    x1: -textWidth / 2,
                                     y1: 12, // 下划线位置
-                                    x2: textWidth/2,
+                                    x2: textWidth / 2,
                                     y2: 12,
                                     stroke: '#000',
                                     lineWidth: 1
@@ -1084,7 +1191,7 @@
                             });
                         }
                     }
-                    
+
                     return shape;
                 }
             });
@@ -1093,7 +1200,7 @@
                 draw(cfg, group) {
                     const fontSize = 16;
                     const text = cfg.label || '';
-                    
+
                     // 计算文字尺寸，考虑中文字符
                     const getTextWidth = (text, fontSize) => {
                         let width = 0;
@@ -1107,23 +1214,23 @@
                         }
                         return width;
                     };
-                    
+
                     const textWidth = getTextWidth(text, fontSize);
                     const horizontalPadding = 24; // 水平内边距
                     const verticalPadding = 16; // 垂直内边距
                     const minWidth = 80; // 最小宽度
                     const minHeight = 40; // 最小高度
-                    
+
                     // 计算菱形的实际宽度和高度
                     // 菱形是扁的，宽度要比高度大
                     const requiredWidth = textWidth + horizontalPadding * 2;
                     const requiredHeight = fontSize + verticalPadding * 2;
-                    
+
                     // 菱形的水平半径（宽度的一半）
                     const halfWidth = Math.max(minWidth / 2, requiredWidth / 2);
                     // 菱形的垂直半径（高度的一半），设置为宽度的0.6倍，让菱形变扁
                     const halfHeight = Math.max(minHeight / 2, Math.min(halfWidth * 0.6, requiredHeight / 2));
-                    
+
                     const shape = group.addShape('polygon', {
                         attrs: {
                             points: [
@@ -1154,12 +1261,60 @@
                             capture: false
                         });
                     }
-                    
+
                     return shape;
                 }
             });
 
+            const CodeEditor = ({ value, onChange, placeholder }) => {
+                const editorRef = useRef(null);
+                const cmInstance = useRef(null);
+
+                useEffect(() => {
+                    if (!editorRef.current) return;
+
+                    cmInstance.current = CodeMirror.fromTextArea(editorRef.current, {
+                        mode: "text/x-sql",
+                        lineNumbers: true,
+                        theme: "default",
+                        lineWrapping: true,
+                        height: "480px",
+                        placeholder: placeholder,
+                        matchBrackets: true,
+                        autoCloseBrackets: true
+                    });
+
+                    cmInstance.current.on('change', (cm) => {
+                        const newValue = cm.getValue();
+                        onChange(newValue);
+                    });
+
+                    cmInstance.current.setValue(value);
+
+                    return () => {
+                        if (cmInstance.current) {
+                            cmInstance.current.toTextArea();
+                        }
+                    };
+                }, []);
+
+                useEffect(() => {
+                    if (cmInstance.current && cmInstance.current.getValue() !== value) {
+                        const cursor = cmInstance.current.getCursor();
+                        cmInstance.current.setValue(value);
+                        cmInstance.current.setCursor(cursor);
+                    }
+                }, [value]);
+
+                return (
+                    <div style={{ height: '480px', display: 'flex', flexDirection: 'column', border: '1px solid #e2e8f0', borderRadius: '16px', overflow: 'hidden' }}>
+                        <textarea ref={editorRef} style={{ display: 'none' }} />
+                    </div>
+                );
+            };
+
             const App = () => {
+                const [showBackground, setShowBackground] = useState(true);
                 const [inputText, setInputText] = useState(`// 示例DBML，请在此处粘贴您的 DBML 或 SQL 语句
 Table users {
   id INT [pk, increment]
@@ -1187,47 +1342,76 @@ Ref: posts.author_id > users.id
                 const [error, setError] = useState(null);
                 const [loading, setLoading] = useState(false);
                 const [hasGraph, setHasGraph] = useState(false);
+                const [randomSeed, setRandomSeed] = useState(0); // 随机种子，0表示使用确定性布局
+                const lastInputRef = useRef(''); // 记录上次生成时的输入
                 const containerRef = useRef(null);
                 const graphRef = useRef(null);
 
                 // 更新图表样式
                 const updateGraphStyles = (graphInstance, colored) => {
                     if (!graphInstance || graphInstance.destroyed) return;
-                    
+
                     graphInstance.setAutoPaint(false);
-                    
+
                     const nodes = graphInstance.getNodes();
                     nodes.forEach(node => {
                         const model = node.getModel();
                         const styles = {};
-                        
+
                         if (colored) {
                             if (model.nodeType === 'entity') {
-                                styles.style = { fill: '#ffffff', stroke: '#595959', lineWidth: 2 };
-                                styles.labelCfg = { style: { fill: '#000000', fontWeight: 'bold' } };
+                                // Sky Blue theme
+                                styles.style = {
+                                    fill: '#e0f2fe',
+                                    stroke: '#0ea5e9',
+                                    lineWidth: 2,
+                                    radius: 8,
+                                    shadowColor: 'rgba(14, 165, 233, 0.2)',
+                                    shadowBlur: 10
+                                };
+                                styles.labelCfg = { style: { fill: '#0f172a', fontWeight: '700', fontFamily: 'Inter' } };
                             } else if (model.nodeType === 'relationship') {
-                                styles.style = { fill: '#f9f0ff', stroke: '#722ed1', lineWidth: 2 };
-                                styles.labelCfg = { style: { fill: '#000000' } };
+                                // Violet theme
+                                styles.style = {
+                                    fill: '#f5f3ff',
+                                    stroke: '#8b5cf6',
+                                    lineWidth: 2,
+                                    shadowColor: 'rgba(139, 92, 246, 0.2)',
+                                    shadowBlur: 10
+                                };
+                                styles.labelCfg = { style: { fill: '#0f172a', fontFamily: 'Inter' } };
                             } else if (model.nodeType === 'attribute') {
                                 if (model.keyType === 'pk') {
-                                    styles.style = { fill: '#f6ffed', stroke: '#52c41a', lineWidth: 2 };
-                                    styles.labelCfg = { style: { fill: '#000000', fontWeight: 'bold' } };
+                                    // Emerald theme
+                                    styles.style = {
+                                        fill: '#ecfdf5',
+                                        stroke: '#10b981',
+                                        lineWidth: 2,
+                                        shadowColor: 'rgba(16, 185, 129, 0.2)',
+                                        shadowBlur: 5
+                                    };
+                                    styles.labelCfg = { style: { fill: '#0f172a', fontWeight: '700', fontFamily: 'Inter' } };
                                 } else {
-                                    // 普通属性改为黄色边框和淡黄色填充
-                                    styles.style = { fill: '#fffbe6', stroke: '#faad14', lineWidth: 1 };
-                                    styles.labelCfg = { style: { fill: '#000000', fontWeight: 'normal' } };
+                                    // Slate theme
+                                    styles.style = {
+                                        fill: '#ffffff',
+                                        stroke: '#94a3b8', // Slate 400
+                                        lineWidth: 2
+                                    };
+                                    styles.labelCfg = { style: { fill: '#475569', fontWeight: 'normal', fontFamily: 'Inter' } };
                                 }
                             }
                         } else {
                             // 黑白模式 (无填充 = 白色背景)
-                            styles.style = { 
-                                fill: '#ffffff', 
-                                stroke: '#000000', 
-                                lineWidth: model.keyType === 'pk' || model.nodeType === 'entity' || model.nodeType === 'relationship' ? 2 : 1 
+                            styles.style = {
+                                fill: '#ffffff',
+                                stroke: '#1e293b',
+                                lineWidth: model.keyType === 'pk' || model.nodeType === 'entity' || model.nodeType === 'relationship' ? 2 : 1,
+                                shadowBlur: 0
                             };
-                            styles.labelCfg = { style: { fill: '#000000', fontWeight: (model.nodeType === 'entity' || model.keyType === 'pk') ? 'bold' : 'normal' } };
+                            styles.labelCfg = { style: { fill: '#1e293b', fontWeight: (model.nodeType === 'entity' || model.keyType === 'pk') ? 'bold' : 'normal', fontFamily: 'Inter' } };
                         }
-                        
+
                         graphInstance.updateItem(node, styles);
                     });
 
@@ -1235,19 +1419,25 @@ Ref: posts.author_id > users.id
                     const edges = graphInstance.getEdges();
                     edges.forEach(edge => {
                         graphInstance.updateItem(edge, {
-                            style: { stroke: '#000000' },
-                            labelCfg: { 
-                                style: { 
-                                    fill: '#000000', 
-                                    background: { 
+                            style: {
+                                stroke: '#000000',
+                                lineWidth: 1.5,
+                                endArrow: false
+                            },
+                            labelCfg: {
+                                style: {
+                                    fill: '#000000',
+                                    fontSize: 12,
+                                    background: {
                                         fill: '#ffffff',
-                                        padding: [2, 4, 2, 4]
-                                    } 
-                                } 
+                                        padding: [2, 4, 2, 4],
+                                        radius: 2
+                                    }
+                                }
                             }
                         });
                     });
-                    
+
                     graphInstance.paint();
                     graphInstance.setAutoPaint(true);
                 };
@@ -1262,74 +1452,93 @@ Ref: posts.author_id > users.id
                 // 真正有效的平滑缩放函数
                 const smoothFitView = (graph, duration = 800, easing = 'easeOutCubic') => {
                     if (!graph || graph.destroyed) return;
-                    
+
                     try {
-                        // 获取当前状态
-                        const currentZoom = graph.getZoom();
-                        const currentCenter = graph.getViewPortCenterPoint();
-                        
-                        // 计算目标状态
-                        const group = graph.getGroup();
-                        const bbox = group.getCanvasBBox();
-                        
-                        if (!bbox || bbox.width === 0 || bbox.height === 0) {
-                            // 如果无法获取边界框，直接调用fitView
+                        // 获取所有节点的边界框
+                        const nodes = graph.getNodes();
+                        if (!nodes || nodes.length === 0) {
                             graph.fitView(20);
                             return;
                         }
-                        
+
+                        // 计算所有节点的总体边界框
+                        let minX = Infinity, maxX = -Infinity;
+                        let minY = Infinity, maxY = -Infinity;
+
+                        nodes.forEach(node => {
+                            const bbox = node.getBBox();
+                            minX = Math.min(minX, bbox.minX);
+                            maxX = Math.max(maxX, bbox.maxX);
+                            minY = Math.min(minY, bbox.minY);
+                            maxY = Math.max(maxY, bbox.maxY);
+                        });
+
+                        // 边界框的宽度和高度
+                        const contentWidth = maxX - minX;
+                        const contentHeight = maxY - minY;
+                        const contentCenterX = (minX + maxX) / 2;
+                        const contentCenterY = (minY + maxY) / 2;
+
+                        if (contentWidth === 0 || contentHeight === 0) {
+                            graph.fitView(20);
+                            return;
+                        }
+
+                        // 画布尺寸
                         const graphWidth = graph.get('width');
                         const graphHeight = graph.get('height');
                         const padding = 40; // 边距
-                        
-                        // 计算目标缩放比例
-                        const targetZoom = Math.min(
-                            (graphWidth - padding * 2) / bbox.width,
-                            (graphHeight - padding * 2) / bbox.height
-                        ) * currentZoom;
-                        
-                        // 计算目标中心点 
-                        const targetCenter = {
-                            x: graphWidth / 2,
-                            y: graphHeight / 2
-                        };
-                        
+
+                        // 计算合适的缩放比例，让内容完全显示在画布内，且尽可能大
+                        const scaleX = (graphWidth - padding * 2) / contentWidth;
+                        const scaleY = (graphHeight - padding * 2) / contentHeight;
+                        const targetZoom = Math.min(scaleX, scaleY);
+
+                        // 计算目标平移，让内容居中显示
+                        // 在新的缩放比例下，内容中心应该对应到画布中心
+                        const targetCenterX = graphWidth / 2 - contentCenterX * targetZoom;
+                        const targetCenterY = graphHeight / 2 - contentCenterY * targetZoom;
+
+                        // 获取当前状态
+                        const currentZoom = graph.getZoom();
+                        const currentMatrix = graph.get('group').getMatrix();
+                        const currentCenterX = currentMatrix ? currentMatrix[6] : 0;
+                        const currentCenterY = currentMatrix ? currentMatrix[7] : 0;
+
                         // 执行平滑动画
                         const startTime = performance.now();
-                        const startZoom = currentZoom;
-                        const startCenter = { ...currentCenter };
-                        
+
                         const animate = (currentTime) => {
                             if (!graph || graph.destroyed) return;
-                            
+
                             const elapsed = currentTime - startTime;
                             let progress = Math.min(elapsed / duration, 1);
-                            
+
                             // 缓动函数
                             if (easing === 'easeOutQuart') {
                                 progress = 1 - Math.pow(1 - progress, 4);
                             } else { // easeOutCubic
                                 progress = 1 - Math.pow(1 - progress, 3);
                             }
-                            
+
                             // 计算当前帧的值
-                            const frameZoom = startZoom + (targetZoom - startZoom) * progress;
-                            const frameCenter = {
-                                x: startCenter.x + (targetCenter.x - startCenter.x) * progress,
-                                y: startCenter.y + (targetCenter.y - startCenter.y) * progress
-                            };
-                            
+                            const frameZoom = currentZoom + (targetZoom - currentZoom) * progress;
+                            const frameCenterX = currentCenterX + (targetCenterX - currentCenterX) * progress;
+                            const frameCenterY = currentCenterY + (targetCenterY - currentCenterY) * progress;
+
                             // 应用变换
-                            graph.zoomTo(frameZoom, frameCenter);
-                            
+                            const groupMatrix = [frameZoom, 0, 0, 0, frameZoom, 0, frameCenterX, frameCenterY, 1];
+                            graph.get('group').setMatrix(groupMatrix);
+                            graph.paint();
+
                             // 继续动画
                             if (progress < 1) {
                                 requestAnimationFrame(animate);
                             }
                         };
-                        
+
                         requestAnimationFrame(animate);
-                        
+
                     } catch (error) {
                         console.warn('Smooth fit view failed, falling back to instant fit:', error);
                         graph.fitView(20);
@@ -1337,8 +1546,11 @@ Ref: posts.author_id > users.id
                 };
 
                 // 基于目标坐标的节点平滑移动
-                const animateNodesToTargets = (graph, targets, duration = 800) => {
-                    if (!graph || graph.destroyed || !targets?.size) return;
+                const animateNodesToTargets = (graph, targets, duration = 800, onFinish) => {
+                    if (!graph || graph.destroyed || !targets?.size) {
+                        if (onFinish) onFinish();
+                        return;
+                    }
 
                     const startPositions = new Map();
                     graph.getNodes().forEach(node => {
@@ -1370,21 +1582,266 @@ Ref: posts.author_id > users.id
                             requestAnimationFrame(step);
                         } else {
                             graph.setAutoPaint(true);
+                            if (onFinish) onFinish();
                         }
                     };
 
                     requestAnimationFrame(step);
                 };
 
-                const handleGenerate = () => {
+                // 基于字符串生成确定性哈希值（用于替代Math.random）
+                const deterministicHash = (str, extraSeed = 0) => {
+                    let hash = extraSeed; // 加入额外的种子
+                    for (let i = 0; i < str.length; i++) {
+                        const char = str.charCodeAt(i);
+                        hash = ((hash << 5) - hash) + char;
+                        hash = hash & hash; // 转换为32位整数
+                    }
+                    return Math.abs(hash);
+                };
+
+                // 生成确定性的[-0.5, 0.5)范围内的数值
+                const deterministicRandom = (seed, extraSeed = 0) => {
+                    const x = Math.sin(seed + extraSeed * 1000) * 10000;
+                    return (x - Math.floor(x)) - 0.5;
+                };
+
+                // 初始定位：让互不相连的组件一开始就围绕中心分布，避免先交叉再分散
+                const applyInitialComponentPositions = (nodes, edges, containerEl, seed = 0) => {
+                    if (!containerEl || !nodes.length) return;
+                    if (nodes.length < 2) return;
+
+                    const width = containerEl.offsetWidth || 1200;
+                    const height = containerEl.offsetHeight || 800;
+                    const center = { x: width / 2, y: height / 2 };
+
+                    const sizeMap = {
+                        entity: 140,
+                        relationship: 90,
+                        attribute: 90
+                    };
+
+                    const approxRadius = (node) => {
+                        const size = sizeMap[node.nodeType] || 90;
+                        return Math.sqrt(size * size * 2) / 2 + 20;
+                    };
+
+                    // 构建无向邻接表
+                    const adj = new Map();
+                    edges.forEach(e => {
+                        const { source, target } = e;
+                        if (!adj.has(source)) adj.set(source, new Set());
+                        if (!adj.has(target)) adj.set(target, new Set());
+                        adj.get(source).add(target);
+                        adj.get(target).add(source);
+                    });
+
+                    // 划分组件（按ID排序以确保稳定性）
+                    const visited = new Set();
+                    const components = [];
+                    const sortedNodes = [...nodes].sort((a, b) => a.id.localeCompare(b.id));
+                    sortedNodes.forEach(n => {
+                        if (visited.has(n.id)) return;
+                        const stack = [n.id];
+                        const comp = [];
+                        visited.add(n.id);
+                        while (stack.length) {
+                            const cur = stack.pop();
+                            const found = nodes.find(nn => nn.id === cur);
+                            if (found) comp.push(found);
+                            const neighbors = adj.get(cur);
+                            if (!neighbors) continue;
+                            // 对邻居节点也进行排序以确保DFS顺序稳定
+                            const sortedNeighbors = Array.from(neighbors).sort((a, b) => a.localeCompare(b));
+                            sortedNeighbors.forEach(nb => {
+                                if (!visited.has(nb)) {
+                                    visited.add(nb);
+                                    stack.push(nb);
+                                }
+                            });
+                        }
+                        if (comp.length) components.push(comp);
+                    });
+
+                    if (components.length < 2) return;
+
+                    // 估算每个组件半径
+                    const compMeta = components.map(list => {
+                        const r = list.reduce((max, n) => Math.max(max, approxRadius(n)), 30);
+                        const extra = Math.max(0, list.length - 6) * 6;
+                        return { nodes: list, radius: r + extra };
+                    });
+
+                    const perim = compMeta.reduce((sum, c) => sum + c.radius * 2, 0);
+                    const gap = 100;
+                    const orbit = Math.min(
+                        Math.max(240, (perim + gap * compMeta.length) / (2 * Math.PI)),
+                        520 // 不要飞得太远
+                    );
+
+                    let angle = -Math.PI / 2;
+                    const angleStep = (Math.PI * 2) / compMeta.length;
+                    compMeta.forEach(meta => {
+                        const cx = center.x + orbit * Math.cos(angle);
+                        const cy = center.y + orbit * Math.sin(angle);
+                        // 组件内部使用确定性偏移，避免完全重叠且保证每次生成相同
+                        meta.nodes.forEach((n, idx) => {
+                            const hash = deterministicHash(n.id, seed);
+                            const offsetX = deterministicRandom(hash, seed) * Math.max(40, meta.radius * 0.4);
+                            const offsetY = deterministicRandom(hash + 1000, seed) * Math.max(40, meta.radius * 0.4);
+                            n.x = cx + offsetX;
+                            n.y = cy + offsetY;
+                        });
+                        angle += angleStep;
+                    });
+                };
+
+                // 将互不相连的组件分散到中心周围，避免首屏交叉
+                const spreadDisconnectedComponents = (graph, onFinish) => {
+                    if (!graph || graph.destroyed) {
+                        if (onFinish) onFinish();
+                        return;
+                    }
+                    const nodes = graph.getNodes();
+                    if (nodes.length < 2) {
+                        if (onFinish) onFinish();
+                        return;
+                    }
+
+                    // 建立无向邻接表
+                    const adj = new Map();
+                    graph.getEdges().forEach(edge => {
+                        const { source, target } = edge.getModel();
+                        if (!adj.has(source)) adj.set(source, new Set());
+                        if (!adj.has(target)) adj.set(target, new Set());
+                        adj.get(source).add(target);
+                        adj.get(target).add(source);
+                    });
+
+                    // DFS 拆出组件（按ID排序以确保稳定性）
+                    const visited = new Set();
+                    const components = [];
+                    const sortedNodes = [...nodes].sort((a, b) => a.getModel().id.localeCompare(b.getModel().id));
+                    sortedNodes.forEach(node => {
+                        const id = node.getModel().id;
+                        if (visited.has(id)) return;
+                        const stack = [id];
+                        const comp = [];
+                        visited.add(id);
+                        while (stack.length) {
+                            const cur = stack.pop();
+                            const curNode = graph.findById(cur);
+                            if (curNode) comp.push(curNode);
+                            const neighbors = adj.get(cur);
+                            if (!neighbors) continue;
+                            // 对邻居节点也进行排序以确保DFS顺序稳定
+                            const sortedNeighbors = Array.from(neighbors).sort((a, b) => a.localeCompare(b));
+                            sortedNeighbors.forEach(nid => {
+                                if (!visited.has(nid)) {
+                                    visited.add(nid);
+                                    stack.push(nid);
+                                }
+                            });
+                        }
+                        if (comp.length) components.push(comp);
+                    });
+
+                    if (components.length < 2) {
+                        if (onFinish) onFinish();
+                        return; // 只有一个连通块无需分散
+                    }
+
+                    const diagramCenter = {
+                        x: graph.get('width') / 2,
+                        y: graph.get('height') / 2
+                    };
+
+                    const targets = new Map();
+
+                    // 组件的大小与半径
+                    const compMeta = components.map(comp => {
+                        let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+                        let cx = 0, cy = 0;
+                        comp.forEach(n => {
+                            const bbox = n.getBBox();
+                            minX = Math.min(minX, bbox.minX);
+                            maxX = Math.max(maxX, bbox.maxX);
+                            minY = Math.min(minY, bbox.minY);
+                            maxY = Math.max(maxY, bbox.maxY);
+                            cx += bbox.centerX;
+                            cy += bbox.centerY;
+                        });
+                        const width = Math.max(40, maxX - minX);
+                        const height = Math.max(40, maxY - minY);
+                        const radius = Math.sqrt(width * width + height * height) / 2 + 40; // 额外留白
+                        const center = {
+                            x: cx / comp.length,
+                            y: cy / comp.length
+                        };
+                        return { comp, radius, center };
+                    });
+
+                    // 根据周长分配角度，半径足够大避免互相穿插
+                    const gap = 50;
+                    const totalSpan = compMeta.reduce((sum, c) => sum + c.radius * 2 + gap, 0);
+                    const orbitRadius = Math.min(
+                        Math.max(
+                            totalSpan / (2 * Math.PI),
+                            Math.max(...compMeta.map(c => c.radius)) + gap + 40,
+                            240
+                        ),
+                        520
+                    );
+
+                    let angleCursor = -Math.PI / 2;
+                    compMeta.forEach(meta => {
+                        const angleSpan = ((meta.radius * 2 + gap) / totalSpan) * Math.PI * 2;
+                        const midAngle = angleCursor + angleSpan / 2;
+
+                        // 将组件整体移动到环形位置，并旋转到切向方向，避免“穿过中心”的直线
+                        const targetCenter = {
+                            x: diagramCenter.x + orbitRadius * Math.cos(midAngle),
+                            y: diagramCenter.y + orbitRadius * Math.sin(midAngle)
+                        };
+                        const rotateAngle = midAngle + Math.PI / 2;
+                        const cosA = Math.cos(rotateAngle);
+                        const sinA = Math.sin(rotateAngle);
+
+                        meta.comp.forEach(node => {
+                            const m = node.getModel();
+                            const relX = m.x - meta.center.x;
+                            const relY = m.y - meta.center.y;
+                            const rx = relX * cosA - relY * sinA;
+                            const ry = relX * sinA + relY * cosA;
+                            targets.set(m.id, {
+                                x: targetCenter.x + rx,
+                                y: targetCenter.y + ry
+                            });
+                        });
+
+                        angleCursor += angleSpan;
+                    });
+
+                    animateNodesToTargets(graph, targets, 450, onFinish);
+                };
+
+                const handleGenerate = (useSeed = null) => {
                     try {
                         setError(null);
                         setLoading(true);
-                        
+
                         if (!inputText.trim()) {
                             setError("输入为空。");
                             setLoading(false);
                             return;
+                        }
+
+                        // 确定使用哪个种子：如果明确传入了种子值，使用传入的；否则使用状态中的
+                        const actualSeed = useSeed !== null ? useSeed : randomSeed;
+
+                        // 如果输入改变了，记录新输入
+                        if (lastInputRef.current !== inputText.trim()) {
+                            lastInputRef.current = inputText.trim();
                         }
 
                         let parsedData;
@@ -1406,7 +1863,10 @@ Ref: posts.author_id > users.id
                         }
 
                         const { nodes, edges } = generateChenModelData(tables, relationships, isColored);
-                        
+
+                        // 初始位置：先把不同组件分开围绕中心，避免初始交叉
+                        applyInitialComponentPositions(nodes, edges, containerRef.current, actualSeed);
+
                         // Clear previous graph completely
                         if (graphRef.current) {
                             graphRef.current.clear(); // 先清空数据
@@ -1418,23 +1878,23 @@ Ref: posts.author_id > users.id
                         const graph = new G6.Graph({
                             container: containerRef.current,
                             width: containerRef.current.offsetWidth,
-                            height: 600,
+                            height: containerRef.current.offsetHeight,
                             renderer: 'canvas',
                             background: '#ffffff', // 设置白色背景，确保复制图片时背景为白色
                             modes: {
-                            default: [
-                                'drag-node',                         // 1. 先判断拖节点
-                                {
-                                type: 'drag-canvas',
-                                allowDragOnItem: true,             // 2. 允许在 item 上拖画布
-                                enableOptimize: false,              //    （性能优化，可留可删）
-                                shouldBegin(e) {                   // 3. 自定义开始条件
-                                    // e.item 为空 = 真空白处；组合 / 边也算"非 node"
-                                    return !e.item || e.item.getType() !== 'node';
-                                }
-                                },
-                                'zoom-canvas'
-                            ]
+                                default: [
+                                    'drag-node',                         // 1. 先判断拖节点
+                                    {
+                                        type: 'drag-canvas',
+                                        allowDragOnItem: true,             // 2. 允许在 item 上拖画布
+                                        enableOptimize: false,              //    （性能优化，可留可删）
+                                        shouldBegin(e) {                   // 3. 自定义开始条件
+                                            // e.item 为空 = 真空白处；组合 / 边也算"非 node"
+                                            return !e.item || e.item.getType() !== 'node';
+                                        }
+                                    },
+                                    'zoom-canvas'
+                                ]
                             },
 
                             // 优化后的力导向布局配置，以完全避免重叠
@@ -1466,12 +1926,15 @@ Ref: posts.author_id > users.id
                                     graph.refreshPositions();
                                 },
                                 onLayoutEnd: () => {
-                                    // 布局完成后平滑调整视图
+                                    // 先让互不相连的组件环绕分布，避免十字交叉
                                     setTimeout(() => {
                                         if (graphRef.current && !graphRef.current.destroyed) {
-                                            smoothFitView(graphRef.current, 800, 'easeOutCubic');
+                                            spreadDisconnectedComponents(graphRef.current, () => {
+                                                // 布局完成后平滑调整视图
+                                                smoothFitView(graphRef.current, 800, 'easeOutCubic');
+                                            });
                                         }
-                                    }, 200);
+                                    }, 30);
                                 }
                             },
                             defaultNode: {
@@ -1490,11 +1953,11 @@ Ref: posts.author_id > users.id
                             defaultEdge: {
                                 style: {
                                     lineWidth: 1,
-                                    stroke: '#000'
+                                    stroke: '#000000'
                                 },
                                 labelCfg: {
                                     style: {
-                                        fill: '#000',
+                                        fill: '#000000',
                                         fontSize: 14,  // 从10增加到14
                                         background: {
                                             fill: '#fff',
@@ -1538,14 +2001,14 @@ Ref: posts.author_id > users.id
 
                         graphRef.current = graph;
                         setHasGraph(true); // 标记图形已生成
-                        
+
                         // Set data and render
                         graph.data({ nodes, edges });
                         graph.render();
-                        
+
                         // 应用初始样式
                         updateGraphStyles(graph, isColored);
-                        
+
                         // 初始渲染后使用平滑动画调整视图
                         setTimeout(() => {
                             smoothFitView(graph, 600, 'easeOutQuart');
@@ -1567,12 +2030,12 @@ Ref: posts.author_id > users.id
                         graph.on('node:dblclick', (e) => {
                             const node = e.item;
                             const model = node.getModel();
-                            
+
                             // 防止重复编辑
                             if (editingNode) {
                                 finishEditing(false);
                             }
-                            
+
                             startEditing(node, model);
                         });
 
@@ -1581,7 +2044,9 @@ Ref: posts.author_id > users.id
                             editingNode = node;
                             // `getCanvasByPoint` 返回的是相对于 G6 画布左上角的坐标
                             const canvasPoint = graph.getCanvasByPoint(model.x, model.y);
-                            
+                            // 获取当前缩放比例
+                            const currentZoom = graph.getZoom();
+
                             // 根据节点类型计算输入框的尺寸和位置
                             const getNodeDimensions = (nodeModel) => {
                                 const text = nodeModel.label || '';
@@ -1596,9 +2061,9 @@ Ref: posts.author_id > users.id
                                     }
                                     return width;
                                 };
-                                
+
                                 let width, height, fontSize;
-                                
+
                                 if (nodeModel.type === 'entity') {
                                     fontSize = 18;
                                     const textWidth = getTextWidth(text, fontSize);
@@ -1619,47 +2084,68 @@ Ref: posts.author_id > users.id
                                     width = Math.max(60, textWidth + 32);
                                     height = Math.max(40, fontSize + 16);
                                 }
-                                
+
                                 return { width, height, fontSize };
                             };
-                            
+
                             const dimensions = getNodeDimensions(model);
-                            
+                            // 应用缩放到输入框尺寸和字体
+                            const scaledWidth = dimensions.width * currentZoom;
+                            const scaledHeight = dimensions.height * currentZoom;
+                            const scaledFontSize = dimensions.fontSize * currentZoom;
+
+                            // 根据节点类型获取对应的颜色
+                            const getNodeColor = (nodeModel) => {
+                                if (nodeModel.type === 'entity') {
+                                    return '#0ea5e9'; // 蓝色
+                                } else if (nodeModel.type === 'relationship') {
+                                    return '#722ed1'; // 紫色
+                                } else if (nodeModel.type === 'attribute') {
+                                    return nodeModel.keyType === 'pk' ? '#10b981' : '#94a3b8'; // 绿色或灰色
+                                }
+                                return '#ff8a65'; // 默认橙色
+                            };
+
+                            const borderColor = getNodeColor(model);
+                            const shadowColor = borderColor.replace('#', 'rgba(') + ', 0.2)'.replace('rgba(', 'rgba(').replace(', 0.2)', ')');
+                            const rgbValues = borderColor.substring(1).match(/.{1,2}/g).map(x => parseInt(x, 16));
+                            const shadowColorRGB = `rgba(${rgbValues.join(', ')}, 0.2)`;
+
                             // 创建输入框
                             editInput = document.createElement('input');
                             editInput.type = 'text';
                             editInput.value = model.label || '';
                             editInput.style.position = 'absolute';
                             // 定位是相对于 G6 的容器 (containerRef.current)
-                            editInput.style.left = (canvasPoint.x - dimensions.width / 2) + 'px';
-                            editInput.style.top = (canvasPoint.y - dimensions.height / 2) + 'px';
-                            editInput.style.width = dimensions.width + 'px';
-                            editInput.style.height = dimensions.height + 'px';
+                            editInput.style.left = (canvasPoint.x - scaledWidth / 2) + 'px';
+                            editInput.style.top = (canvasPoint.y - scaledHeight / 2) + 'px';
+                            editInput.style.width = scaledWidth + 'px';
+                            editInput.style.height = scaledHeight + 'px';
                             editInput.style.padding = '0';
-                            editInput.style.border = '2px solid #ff8a65';
+                            editInput.style.border = `${2 * currentZoom}px solid ${borderColor}`;
                             editInput.style.outline = 'none';
-                            editInput.style.fontSize = dimensions.fontSize + 'px';
+                            editInput.style.fontSize = scaledFontSize + 'px';
                             editInput.style.textAlign = 'center';
                             editInput.style.backgroundColor = 'rgba(255, 255, 255, 0.95)';
                             editInput.style.zIndex = '1000';
-                            editInput.style.boxShadow = '0 0 0 3px rgba(255, 138, 101, 0.2)';
+                            editInput.style.boxShadow = `0 0 0 ${3 * currentZoom}px ${shadowColorRGB}`;
                             editInput.style.fontWeight = (model.type === 'entity' || model.keyType === 'pk') ? 'bold' : 'normal';
-                            
+
                             // 根据节点类型设置边框样式
                             if (model.type === 'entity') {
-                                editInput.style.borderRadius = '4px';
+                                editInput.style.borderRadius = (4 * currentZoom) + 'px';
                             } else if (model.type === 'relationship') {
-                                editInput.style.borderRadius = '8px';
+                                editInput.style.borderRadius = (8 * currentZoom) + 'px';
                                 // 菱形节点用矩形输入框，不旋转以便于编辑
                             } else { // attribute
                                 editInput.style.borderRadius = '50%';
                             }
-                            
+
                             // 将输入框附加到 G6 的容器中
                             containerRef.current.appendChild(editInput);
                             editInput.focus();
                             editInput.select();
-                            
+
                             // 监听键盘事件
                             editInput.addEventListener('keydown', (e) => {
                                 if (e.key === 'Enter') {
@@ -1670,7 +2156,7 @@ Ref: posts.author_id > users.id
                                     e.preventDefault();
                                 }
                             });
-                            
+
                             // 监听失去焦点事件
                             editInput.addEventListener('blur', () => {
                                 setTimeout(() => finishEditing(true), 100);
@@ -1680,16 +2166,16 @@ Ref: posts.author_id > users.id
                         // 完成编辑
                         const finishEditing = (save) => {
                             if (!editingNode || !editInput) return;
-                            
+
                             if (save && editInput.value.trim()) {
                                 const newLabel = editInput.value.trim();
                                 const model = editingNode.getModel();
-                                
+
                                 // 更新节点标签
                                 graph.updateItem(editingNode, {
                                     label: newLabel
                                 });
-                                
+
                                 // 如果是属性节点，可能需要更新相关的数据结构
                                 if (model.type === 'attribute') {
                                     // 可以在这里添加额外的数据同步逻辑
@@ -1700,7 +2186,7 @@ Ref: posts.author_id > users.id
                                     console.log(`关系 ${model.label} 已更新为 ${newLabel}`);
                                 }
                             }
-                            
+
                             // 清理编辑状态
                             if (editInput && editInput.parentNode) {
                                 editInput.parentNode.removeChild(editInput);
@@ -1715,25 +2201,25 @@ Ref: posts.author_id > users.id
                                 finishEditing(true);
                             }
                         });
-                        
+
                         // 自定义拖拽逻辑：拖动实体时带动相关属性一起移动
                         let draggedEntity = null;
                         let relatedAttributes = [];
                         let dragStartPositions = new Map();
-                        
+
                         graph.on('node:dragstart', (e) => {
                             const node = e.item;
                             const nodeModel = node.getModel();
-                            
+
                             // 只处理实体节点的拖拽
                             if (nodeModel.type === 'entity') {
                                 draggedEntity = node;
                                 relatedAttributes = [];
                                 dragStartPositions.clear();
-                                
+
                                 // 记录实体的初始位置
                                 dragStartPositions.set(nodeModel.id, { x: nodeModel.x, y: nodeModel.y });
-                                
+
                                 // 找到所有相关的属性节点
                                 const allNodes = graph.getNodes();
                                 allNodes.forEach(n => {
@@ -1750,26 +2236,26 @@ Ref: posts.author_id > users.id
                         graph.on('node:drag', (e) => {
                             const node = e.item;
                             const nodeModel = node.getModel();
-                            
+
                             // 只处理实体节点的拖拽
                             if (nodeModel.type === 'entity' && draggedEntity === node) {
                                 const currentPos = { x: nodeModel.x, y: nodeModel.y };
                                 const startPos = dragStartPositions.get(nodeModel.id);
-                                
+
                                 if (startPos) {
                                     // 计算实体的移动距离
                                     const deltaX = currentPos.x - startPos.x;
                                     const deltaY = currentPos.y - startPos.y;
-                                    
+
                                     // 同步移动所有相关的属性节点
                                     relatedAttributes.forEach(attrNode => {
                                         const attrModel = attrNode.getModel();
                                         const attrStartPos = dragStartPositions.get(attrModel.id);
-                                        
+
                                         if (attrStartPos) {
                                             const newX = attrStartPos.x + deltaX;
                                             const newY = attrStartPos.y + deltaY;
-                                            
+
                                             // 更新属性节点位置
                                             graph.updateItem(attrNode, { x: newX, y: newY });
                                         }
@@ -1781,7 +2267,7 @@ Ref: posts.author_id > users.id
                         graph.on('node:dragend', (e) => {
                             const node = e.item;
                             const nodeModel = node.getModel();
-                            
+
                             // 清理拖拽状态
                             if (nodeModel.type === 'entity' && draggedEntity === node) {
                                 draggedEntity = null;
@@ -1803,10 +2289,10 @@ Ref: posts.author_id > users.id
                         setLoading(false);
                     }
                 };
-                
+
                 useEffect(() => {
                     handleGenerate();
-                    
+
                     // Cleanup on unmount
                     return () => {
                         if (graphRef.current) {
@@ -1819,7 +2305,7 @@ Ref: posts.author_id > users.id
                     if (graphRef.current && containerRef.current) {
                         graphRef.current.changeSize(
                             containerRef.current.offsetWidth,
-                            600
+                            containerRef.current.offsetHeight
                         );
                     }
                 };
@@ -1834,14 +2320,14 @@ Ref: posts.author_id > users.id
                     try {
                         // 获取当前图形数据，包括节点的实际位置
                         const data = graphRef.current.save();
-                        
+
                         // 创建一个临时容器
                         const tempContainer = document.createElement('div');
                         tempContainer.style.position = 'absolute';
                         tempContainer.style.left = '-9999px';
                         tempContainer.style.top = '-9999px';
                         document.body.appendChild(tempContainer);
-                        
+
                         // 创建临时SVG图形，使用相同的配置
                         const tempGraph = new G6.Graph({
                             container: tempContainer,
@@ -1911,33 +2397,33 @@ Ref: posts.author_id > users.id
 
                         // 读取当前图形数据（包含节点位置）
                         tempGraph.read(data);
-                        
+
                         // 等待渲染完成
                         setTimeout(() => {
                             try {
                                 const tempCanvas = tempGraph.get('canvas');
                                 const svgElement = tempCanvas.get('el');
-                                
+
                                 // 克隆SVG元素以避免修改原始元素
                                 const clonedSvg = svgElement.cloneNode(true);
-                                
+
                                 // 获取所有图形的边界框
                                 const group = tempGraph.getGroup();
                                 const bbox = group.getCanvasBBox();
-                                
+
                                 // 添加padding
                                 const padding = 40;
                                 const viewBoxX = bbox.minX - padding;
                                 const viewBoxY = bbox.minY - padding;
                                 const viewBoxWidth = bbox.width + padding * 2;
                                 const viewBoxHeight = bbox.height + padding * 2;
-                                
+
                                 // 设置SVG属性以包含完整内容
                                 clonedSvg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
                                 clonedSvg.setAttribute('width', viewBoxWidth);
                                 clonedSvg.setAttribute('height', viewBoxHeight);
                                 clonedSvg.setAttribute('viewBox', `${viewBoxX} ${viewBoxY} ${viewBoxWidth} ${viewBoxHeight}`);
-                                
+
                                 // 设置白色背景，使用viewBox的尺寸
                                 const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
                                 rect.setAttribute('x', viewBoxX);
@@ -1946,10 +2432,10 @@ Ref: posts.author_id > users.id
                                 rect.setAttribute('height', viewBoxHeight);
                                 rect.setAttribute('fill', '#ffffff');
                                 clonedSvg.insertBefore(rect, clonedSvg.firstChild);
-                                
+
                                 const svgString = new XMLSerializer().serializeToString(clonedSvg);
                                 downloadSVG(svgString, 'er-diagram.svg');
-                                
+
                                 // 清理临时图形和容器
                                 tempGraph.destroy();
                                 document.body.removeChild(tempContainer);
@@ -1986,6 +2472,28 @@ Ref: posts.author_id > users.id
                     return () => window.removeEventListener('resize', handleResize);
                 }, []);
 
+                // 重新生成：使用新的随机种子重新生成布局
+                const handleRegenerate = () => {
+                    // 生成新的随机种子（1-1000000之间）
+                    const newSeed = Math.floor(Math.random() * 1000000) + 1;
+                    setRandomSeed(newSeed); // 保存到状态以便显示
+                    // 直接传递新种子，不等待状态更新
+                    handleGenerate(newSeed);
+                };
+
+                // 主生成按钮：总是使用确定性布局
+                const handleMainGenerate = () => {
+                    // 重置为确定性布局
+                    setRandomSeed(0); // 保存到状态
+                    // 直接传递 seed=0，不等待状态更新
+                    handleGenerate(0);
+                };
+
+                // 切换背景显示
+                const handleToggleBackground = () => {
+                    setShowBackground(!showBackground);
+                };
+
                 // 环绕排布：让属性均匀围绕实体，同时可移动实体以满足关系距离
                 const handleArrangeLayout = () => {
                     if (!graphRef.current || graphRef.current.destroyed) return;
@@ -1997,6 +2505,8 @@ Ref: posts.author_id > users.id
                     const targets = new Map();
                     const nodeMap = new Map();
                     nodes.forEach(n => nodeMap.set(n.getModel().id, n));
+                    const relAnchors = new Map();
+                    const relRadii = new Map();
 
                     const entityNodes = nodes.filter(n => n.getModel().nodeType === 'entity');
                     const attributeNodes = nodes.filter(n => n.getModel().nodeType === 'attribute');
@@ -2004,7 +2514,9 @@ Ref: posts.author_id > users.id
 
                     const getRadius = (node) => {
                         const bbox = node.getBBox();
-                        return Math.max(bbox.width, bbox.height) / 2;
+                        // 使用对角线的一半作为半径，确保旋转时也不会重叠
+                        // 这样可以更好地处理长方形元素
+                        return Math.sqrt(bbox.width * bbox.width + bbox.height * bbox.height) / 2;
                     };
 
                     const normalizeAngle = (a) => {
@@ -2032,12 +2544,15 @@ Ref: posts.author_id > users.id
                     });
 
                     // 按实体收集属性与关系
-                    const entityInfo = new Map(); // entityId -> {node, attrs:[], rels:[]}
-                    entityNodes.forEach(e => entityInfo.set(e.getModel().id, { node: e, attrs: [], rels: [] }));
+                    const entityInfo = new Map(); // entityId -> {node, attrs:[], rels:[], satellites:[]}
+                    entityNodes.forEach(e => entityInfo.set(e.getModel().id, { node: e, attrs: [], rels: [], satellites: [] }));
                     attributeNodes.forEach(a => {
                         const pid = a.getModel().parentEntity;
                         const info = entityInfo.get(pid);
-                        if (info) info.attrs.push(a);
+                        if (info) {
+                            info.attrs.push(a);
+                            info.satellites.push({ node: a, type: 'attr' }); // 统一管理卫星节点
+                        }
                     });
                     relationshipNodes.forEach(r => {
                         const set = relationshipConnections.get(r.getModel().id);
@@ -2049,6 +2564,7 @@ Ref: posts.author_id > users.id
                                 // 找到另一端实体
                                 const other = connected.find(n => n !== entityNode) || null;
                                 info.rels.push({ relNode: r, otherEntity: other });
+                                info.satellites.push({ node: r, type: 'rel', otherEntity: other }); // 统一管理卫星节点
                             });
                         }
                     });
@@ -2060,20 +2576,44 @@ Ref: posts.author_id > users.id
                         entityPositions.set(m.id, { x: m.x, y: m.y });
                     });
 
-                    // 初步环半径，用于决定关系期望距离
-                    const baseRing = new Map();
+                    // 计算每个实体的统一环绕半径（所有卫星节点使用相同半径）
+                    const baseRing = new Map(); // 统一的环绕半径（中心到卫星中心）
+                    const systemRadius = new Map(); // 实体的碰撞半径（中心到卫星外沿）
+
                     entityInfo.forEach(info => {
                         const entityRadius = getRadius(info.node);
-                        const maxAttrRadius = info.attrs.length ? Math.max(...info.attrs.map(getRadius)) : 0;
-                        const maxRelRadius = info.rels.length ? Math.max(...info.rels.map(r => getRadius(r.relNode))) : 0;
-                        const base = entityRadius + Math.max(maxAttrRadius, maxRelRadius, 30) + 16;
-                        baseRing.set(info.node.getModel().id, base);
+
+                        // 获取所有卫星节点（属性+关系）的最大半径
+                        const maxSatelliteRadius = info.satellites.length > 0
+                            ? Math.max(...info.satellites.map(s => getRadius(s.node)))
+                            : 30;
+
+                        // 基础环半径：实体半径 + 最大卫星半径 + 间隙
+                        let ringR = entityRadius + maxSatelliteRadius + 25;
+
+                        // 检查周长需求：确保所有卫星节点能均匀分布且不重叠
+                        if (info.satellites.length > 1) {
+                            const count = info.satellites.length;
+                            // 每个卫星节点需要的弧长 = 直径 + 间隙
+                            const requiredArcLength = maxSatelliteRadius * 2 + 18;
+                            const totalCircumference = count * requiredArcLength;
+                            const requiredRingR = totalCircumference / (2 * Math.PI);
+                            ringR = Math.max(ringR, requiredRingR);
+                        }
+
+                        baseRing.set(info.node.getModel().id, ringR);
+                        // 系统半径 = 环半径 + 最大卫星半径 (这是实体的最外层边界)
+                        systemRadius.set(info.node.getModel().id, ringR + maxSatelliteRadius);
                     });
 
-                    // 简单弹簧迭代，让实体距离约等于环半径之和
-                    const safeGap = 14;
-                    for (let iter = 0; iter < 40; iter++) {
+                    // 弹簧迭代 + 碰撞检测
+                    const safeGap = 50; // 实体系统之间的安全间距
+                    const entityIds = Array.from(entityPositions.keys());
+
+                    for (let iter = 0; iter < 100; iter++) {
                         let maxMove = 0;
+
+                        // 1. 吸引力：通过关系连接的实体
                         relationshipNodes.forEach(relNode => {
                             const relId = relNode.getModel().id;
                             const connected = relationshipConnections.get(relId);
@@ -2088,60 +2628,150 @@ Ref: posts.author_id > users.id
                             const dx = posB.x - posA.x;
                             const dy = posB.y - posA.y;
                             const dist = Math.hypot(dx, dy) || 1;
-                            const desired = (baseRing.get(idA) || 80) + (baseRing.get(idB) || 80) + safeGap * 2;
+
+                            // 期望距离 = 两个实体的系统半径之和 + 间隙
+                            const rA = systemRadius.get(idA);
+                            const rB = systemRadius.get(idB);
+                            const desired = rA + rB + safeGap;
+
                             const diff = desired - dist;
-                            if (Math.abs(diff) < 0.5) return;
+                            if (Math.abs(diff) < 1) return;
 
                             const nx = dx / dist;
                             const ny = dy / dist;
-                            const move = (diff * 0.35) / 2; // 0.35步进，双方各承担一半
+                            // 移动系数，距离越远拉力越大，距离越近斥力越大
+                            const move = (diff * 0.2) / 2;
+
                             posA.x -= nx * move;
                             posA.y -= ny * move;
                             posB.x += nx * move;
                             posB.y += ny * move;
                             maxMove = Math.max(maxMove, Math.abs(move));
                         });
-                        if (maxMove < 0.2) break;
+
+                        // 2. 全局斥力：防止任意两个实体重叠
+                        for (let i = 0; i < entityIds.length; i++) {
+                            for (let j = i + 1; j < entityIds.length; j++) {
+                                const idA = entityIds[i];
+                                const idB = entityIds[j];
+                                const posA = entityPositions.get(idA);
+                                const posB = entityPositions.get(idB);
+
+                                const dx = posB.x - posA.x;
+                                const dy = posB.y - posA.y;
+                                const dist = Math.hypot(dx, dy) || 1;
+
+                                const rA = systemRadius.get(idA);
+                                const rB = systemRadius.get(idB);
+                                const minDesc = rA + rB + safeGap; // 最小允许距离
+
+                                if (dist < minDesc) {
+                                    // 发生重叠或距离过近，施加斥力
+                                    const overlap = minDesc - dist;
+                                    const nx = dx / dist;
+                                    const ny = dy / dist;
+                                    const move = overlap * 0.5 * 0.5; // 较强的斥力
+
+                                    posA.x -= nx * move;
+                                    posA.y -= ny * move;
+                                    posB.x += nx * move;
+                                    posB.y += ny * move;
+                                    maxMove = Math.max(maxMove, move);
+                                }
+                            }
+                        }
+
+                        if (maxMove < 0.5) break;
                     }
 
+                    // 调整实体间距，让关系菱形可以放在中点且连线等长
+                    const ensureRelationshipClearance = () => {
+                        // 预留给关系节点的最小半径与间隙
+                        const clearanceGap = 12;
+
+                        relationshipNodes.forEach(relNode => {
+                            const relId = relNode.getModel().id;
+                            const connected = relationshipConnections.get(relId);
+                            if (!connected || connected.size !== 2) return;
+
+                            const [entityA, entityB] = Array.from(connected.values());
+                            const idA = entityA.getModel().id;
+                            const idB = entityB.getModel().id;
+                            const posA = entityPositions.get(idA);
+                            const posB = entityPositions.get(idB);
+                            if (!posA || !posB) return;
+
+                            const dx = posB.x - posA.x;
+                            const dy = posB.y - posA.y;
+                            const dist = Math.hypot(dx, dy) || 1;
+
+                            const relRadius = getRadius(relNode);
+                            // 以两端属性环半径为基准，保证菱形位于两实体外圈之外
+                            const minHalf = Math.max(
+                                (baseRing.get(idA) || 40) + relRadius + clearanceGap,
+                                (baseRing.get(idB) || 40) + relRadius + clearanceGap
+                            );
+
+                            const requiredDist = minHalf * 2;
+                            if (dist >= requiredDist) return;
+
+                            const missing = requiredDist - dist;
+                            const nx = dx / dist;
+                            const ny = dy / dist;
+
+                            // 对称地推开两个实体
+                            posA.x -= nx * missing / 2;
+                            posA.y -= ny * missing / 2;
+                            posB.x += nx * missing / 2;
+                            posB.y += ny * missing / 2;
+                        });
+                    };
+
+                    // 运行两轮，传播推开效果
+                    ensureRelationshipClearance();
+                    ensureRelationshipClearance();
+
+                    // 实体目标位置
                     // 实体目标位置
                     entityPositions.forEach((pos, id) => targets.set(id, { ...pos }));
 
                     const entityOrbitRadius = new Map();
 
-                    // 重新计算环、分配属性
+                    // 统一布局所有卫星节点(属性+单实体关系)
                     entityInfo.forEach(info => {
-                        const { node, attrs, rels } = info;
+                        const { node, satellites } = info;
                         const model = node.getModel();
                         const center = entityPositions.get(model.id) || { x: model.x, y: model.y };
-                        const entityRadius = getRadius(node);
 
-                        if (!attrs.length && !rels.length) {
-                            entityOrbitRadius.set(model.id, baseRing.get(model.id) || entityRadius + 40);
-                            return;
-                        }
+                        // 使用预计算的统一环绕半径
+                        const ringRadius = baseRing.get(model.id);
+                        entityOrbitRadius.set(model.id, ringRadius);
 
-                        // 关系方向角，用于留出安全缝隙避免线穿过属性
-                        const relationAngles = rels
-                            .map(r => {
-                                const otherNode = r.otherEntity;
-                                if (!otherNode) return null;
-                                const otherPos = entityPositions.get(otherNode.getModel().id);
-                                if (!otherPos) return null;
-                                return normalizeAngle(Math.atan2(otherPos.y - center.y, otherPos.x - center.x));
-                            })
-                            .filter(a => a !== null);
+                        if (!satellites.length) return;
 
-                        // 安全角度留白
-                        const gapAngle = 0.35; // 约20度
+                        // 找出需要避开的角度(双实体关系的方向)
+                        const avoidAngles = [];
+                        satellites.forEach(s => {
+                            if (s.type === 'rel' && s.otherEntity) {
+                                const otherPos = entityPositions.get(s.otherEntity.getModel().id);
+                                if (otherPos) {
+                                    const angle = normalizeAngle(Math.atan2(otherPos.y - center.y, otherPos.x - center.x));
+                                    avoidAngles.push(angle);
+                                }
+                            }
+                        });
+
+                        // 计算可用角度区间
+                        const gapAngle = 0.35; // 关系方向留白角度
                         const halfGap = gapAngle / 2;
-
-                        // 计算可用的角度区间
                         let segments = [];
-                        if (!relationAngles.length) {
+
+                        if (!avoidAngles.length) {
+                            // 没有需要避开的角度,整圈可用
                             segments.push({ start: 0, end: Math.PI * 2 });
                         } else {
-                            const sortedAngles = relationAngles.slice().sort((a, b) => a - b);
+                            // 计算各个可用区间
+                            const sortedAngles = avoidAngles.slice().sort((a, b) => a - b);
                             const total = Math.PI * 2;
                             for (let i = 0; i < sortedAngles.length; i++) {
                                 const curr = sortedAngles[i];
@@ -2152,94 +2782,91 @@ Ref: posts.author_id > users.id
                             }
                         }
 
-                        // 若间隙被占满，退化为整圈
+                        // 检查总可用角度
                         const totalFree = segments.reduce((sum, s) => sum + (s.end - s.start), 0);
                         if (totalFree <= 0) {
+                            // 间隙被占满,退化为整圈
                             segments = [{ start: 0, end: Math.PI * 2 }];
                         }
 
-                        // 按当前角度排序属性，减少位移
-                        const sortedAttrs = attrs.slice().sort((a, b) => {
-                            const ma = a.getModel();
-                            const mb = b.getModel();
+                        // 收集需要在环上布局的卫星节点(排除双实体关系)
+                        const orbitalSatellites = satellites.filter(s =>
+                            s.type === 'attr' || (s.type === 'rel' && !s.otherEntity)
+                        );
+
+                        if (!orbitalSatellites.length) return;
+
+                        // 按当前角度排序,减少位移
+                        const sortedSatellites = orbitalSatellites.slice().sort((a, b) => {
+                            const ma = a.node.getModel();
+                            const mb = b.node.getModel();
                             const angleA = normalizeAngle(Math.atan2(ma.y - center.y, ma.x - center.x));
                             const angleB = normalizeAngle(Math.atan2(mb.y - center.y, mb.x - center.x));
                             return angleA - angleB;
                         });
 
-                        const maxSatelliteRadius = Math.max(
-                            ...attrs.map(getRadius),
-                            rels.length ? Math.max(...rels.map(r => getRadius(r.relNode))) : 0,
-                            0
+                        // 在所有可用区间内均匀分配卫星节点
+                        const totalCount = sortedSatellites.length;
+                        const totalAngle = segments.reduce((sum, s) => sum + (s.end - s.start), 0);
+
+                        // 计算每个区间应分配的节点数
+                        const segCounts = segments.map(s =>
+                            Math.max(0, Math.round(totalCount * (s.end - s.start) / totalAngle))
                         );
 
-                        const baseDistance = entityRadius + maxSatelliteRadius + 16;
-
-                        // 分配每个区间的属性数量
-                        const attrCount = sortedAttrs.length;
-                        const segCounts = segments.map(() => 0);
-                        let remaining = attrCount;
-                        const freeAngle = segments.reduce((sum, s) => sum + (s.end - s.start), 0);
-
-                        segments.forEach((s, idx) => {
-                            if (idx === segments.length - 1) {
-                                segCounts[idx] = remaining;
-                                remaining = 0;
-                            } else {
-                                const share = attrCount * ((s.end - s.start) / freeAngle);
-                                const count = Math.min(remaining, Math.max(0, Math.floor(share)));
-                                segCounts[idx] = count;
-                                remaining -= count;
-                            }
-                        });
-                        while (remaining > 0) {
+                        // 调整分配数量,确保总和正确
+                        let allocated = segCounts.reduce((sum, c) => sum + c, 0);
+                        let segIdx = 0;
+                        while (allocated < totalCount) {
+                            // 找最大的区间增加一个
                             let maxIdx = 0;
                             let maxLen = -Infinity;
                             segments.forEach((s, idx) => {
-                                const len = s.end - s.start;
-                                if (len > maxLen) {
-                                    maxLen = len;
+                                if (s.end - s.start > maxLen) {
+                                    maxLen = s.end - s.start;
                                     maxIdx = idx;
                                 }
                             });
-                            segCounts[maxIdx] += 1;
-                            remaining -= 1;
+                            segCounts[maxIdx]++;
+                            allocated++;
+                        }
+                        while (allocated > totalCount) {
+                            // 找有分配的区间减少一个
+                            for (let i = segCounts.length - 1; i >= 0; i--) {
+                                if (segCounts[i] > 0) {
+                                    segCounts[i]--;
+                                    allocated--;
+                                    break;
+                                }
+                            }
                         }
 
-                        // 计算避免重叠所需的最小半径
-                        let requiredDistance = baseDistance;
-                        segments.forEach((s, idx) => {
-                            const count = segCounts[idx];
-                            if (count <= 1) return;
-                            const angleStep = (s.end - s.start) / count;
-                            const minChord = 2 * maxSatelliteRadius + 12;
-                            const dist = minChord / (2 * Math.sin(Math.max(0.05, angleStep) / 2));
-                            requiredDistance = Math.max(requiredDistance, dist);
-                        });
-
-                        const ringRadius = requiredDistance;
-                        entityOrbitRadius.set(model.id, ringRadius);
-
-                        // 在区间内平均布点
-                        let attrIdx = 0;
+                        // 在每个区间内均匀放置节点
+                        let nodeIdx = 0;
                         segments.forEach((s, idx) => {
                             const count = segCounts[idx];
                             if (!count) return;
+
+                            // 计算该区间内的角度步长
                             const step = (s.end - s.start) / count;
+
                             for (let i = 0; i < count; i++) {
+                                // 均匀分布:从区间起点+半步长开始
                                 const angle = s.start + step * (i + 0.5);
                                 const useAngle = normalizeAngle(angle);
+
                                 const targetX = center.x + ringRadius * Math.cos(useAngle);
                                 const targetY = center.y + ringRadius * Math.sin(useAngle);
-                                const attrNode = sortedAttrs[attrIdx++];
-                                if (attrNode) {
-                                    targets.set(attrNode.getModel().id, { x: targetX, y: targetY });
+
+                                const satellite = sortedSatellites[nodeIdx++];
+                                if (satellite) {
+                                    targets.set(satellite.node.getModel().id, { x: targetX, y: targetY });
                                 }
                             }
                         });
                     });
 
-                    // 关系节点：沿实体连线分布，距离等于两端实体环距（按比例压缩以避免互撞）
+                    // 双实体关系节点：沿实体连线分布,确保到两端的距离相等
                     relationshipNodes.forEach(relNode => {
                         const relId = relNode.getModel().id;
                         const connectedEntities = relationshipConnections.get(relId);
@@ -2251,159 +2878,303 @@ Ref: posts.author_id > users.id
                             const posA = entityPositions.get(idA);
                             const posB = entityPositions.get(idB);
                             if (!posA || !posB) return;
-                            const dist = Math.hypot(posB.x - posA.x, posB.y - posA.y);
-                            if (dist < 1e-6) return;
 
-                            const rA = entityOrbitRadius.get(idA) || baseRing.get(idA) || 40;
-                            const rB = entityOrbitRadius.get(idB) || baseRing.get(idB) || 40;
-                            const sumR = rA + rB;
-                            const scale = sumR > 0 ? Math.min(1, Math.max(0, (dist - safeGap) / sumR)) : 1;
-                            const dA = rA * scale;
+                            const dx = posB.x - posA.x;
+                            const dy = posB.y - posA.y;
+                            const dist = Math.hypot(dx, dy) || 1;
 
-                            const ratio = dA / dist;
-                            const targetPos = {
-                                x: posA.x + ratio * (posB.x - posA.x),
-                                y: posA.y + ratio * (posB.y - posA.y)
-                            };
-                            targets.set(relId, targetPos);
-                        } else if (connectedEntities && connectedEntities.size === 1) {
-                            // 单实体关系，像属性一样放在环上
-                            const [entity] = Array.from(connectedEntities.values());
-                            const m = entity.getModel();
-                            const center = entityPositions.get(m.id) || { x: m.x, y: m.y };
-                            const ring = entityOrbitRadius.get(m.id) || baseRing.get(m.id) || 60;
-                            const angle = normalizeAngle(Math.atan2(relNode.getModel().y - center.y, relNode.getModel().x - center.x));
-                            targets.set(relId, {
-                                x: center.x + ring * Math.cos(angle),
-                                y: center.y + ring * Math.sin(angle)
-                            });
+                            // 将关系节点放在两实体的几何中心,使连线长度相等
+                            const midX = (posA.x + posB.x) / 2;
+                            const midY = (posA.y + posB.y) / 2;
+
+                            const anchorPos = { x: midX, y: midY };
+                            targets.set(relId, anchorPos);
+                            relAnchors.set(relId, anchorPos);
+                            relRadii.set(relId, getRadius(relNode));
                         }
+                        // 注意:单实体关系已在上面的统一卫星布局中处理
                     });
 
-                    animateNodesToTargets(graph, targets, 850);
+                    // 同一实体对之间的多个关系菱形分布到垂直方向，避免重叠
+                    const groupedRelations = new Map(); // key: sortedEntityIdA-IdB => [{relNode, relRadius, entities}]
+                    relationshipNodes.forEach(relNode => {
+                        const relId = relNode.getModel().id;
+                        const connected = relationshipConnections.get(relId);
+                        if (!connected || connected.size !== 2) return;
+                        const [entityA, entityB] = Array.from(connected.values());
+                        const idA = entityA.getModel().id;
+                        const idB = entityB.getModel().id;
+                        const key = idA < idB ? `${idA}__${idB}` : `${idB}__${idA}`;
+                        if (!groupedRelations.has(key)) groupedRelations.set(key, []);
+                        groupedRelations.get(key).push({
+                            relNode,
+                            relRadius: getRadius(relNode),
+                            entities: [entityA, entityB]
+                        });
+                    });
+
+                    groupedRelations.forEach(list => {
+                        if (list.length <= 1) return;
+                        // 基于中心点进行垂直偏移
+                        const sample = list[0];
+                        const [entityA, entityB] = sample.entities;
+                        const idA = entityA.getModel().id;
+                        const idB = entityB.getModel().id;
+                        const posA = entityPositions.get(idA);
+                        const posB = entityPositions.get(idB);
+                        if (!posA || !posB) return;
+                        const dx = posB.x - posA.x;
+                        const dy = posB.y - posA.y;
+                        const dist = Math.hypot(dx, dy) || 1;
+                        const nx = dx / dist;
+                        const ny = dy / dist;
+                        // 垂直方向单位向量
+                        const px = -ny;
+                        const py = nx;
+
+                        const baseX = targets.get(sample.relNode.getModel().id)?.x || (posA.x + posB.x) / 2;
+                        const baseY = targets.get(sample.relNode.getModel().id)?.y || (posA.y + posB.y) / 2;
+                        const maxRadius = Math.max(...list.map(item => item.relRadius));
+                        const offsetStep = maxRadius * 2 + 16;
+
+                        // 以中心为对称点分布
+                        const sorted = list.slice().sort((a, b) => a.relNode.getModel().id.localeCompare(b.relNode.getModel().id));
+                        const mid = (sorted.length - 1) / 2;
+                        sorted.forEach((item, idx) => {
+                            const offsetIndex = idx - mid;
+                            const ox = px * offsetIndex * offsetStep;
+                            const oy = py * offsetIndex * offsetStep;
+                            const newPos = { x: baseX + ox, y: baseY + oy };
+                            const rid = item.relNode.getModel().id;
+                            targets.set(rid, newPos);
+                            relAnchors.set(rid, newPos);
+                        });
+                    });
+
+                    // 关系节点额外防重叠修正：对关系节点间、关系节点与实体做轻量斥力，保持锚点附近
+                    if (relAnchors.size) {
+                        const relPositions = new Map();
+                        relAnchors.forEach((anchor, id) => {
+                            const t = targets.get(id);
+                            relPositions.set(id, t ? { ...t } : { ...anchor });
+                        });
+
+                        const entityCollisionRadius = new Map();
+                        entityNodes.forEach(en => {
+                            const mid = en.getModel();
+                            const ring = entityOrbitRadius.get(mid.id) || baseRing.get(mid.id) || 60;
+                            // 让关系节点远离实体外圈
+                            entityCollisionRadius.set(mid.id, ring + 20);
+                        });
+
+                        for (let iter = 0; iter < 80; iter++) {
+                            // 关系节点间斥力
+                            relationshipNodes.forEach((relA, idxA) => {
+                                const idA = relA.getModel().id;
+                                const posA = relPositions.get(idA);
+                                const rA = relRadii.get(idA) || 30;
+                                if (!posA) return;
+
+                                for (let j = idxA + 1; j < relationshipNodes.length; j++) {
+                                    const relB = relationshipNodes[j];
+                                    const idB = relB.getModel().id;
+                                    const posB = relPositions.get(idB);
+                                    const rB = relRadii.get(idB) || 30;
+                                    if (!posB) continue;
+
+                                    const dx = posB.x - posA.x;
+                                    const dy = posB.y - posA.y;
+                                    let dist = Math.hypot(dx, dy);
+                                    if (dist === 0) dist = 0.01;
+                                    const minDist = rA + rB + 14;
+                                    if (dist < minDist) {
+                                        const push = (minDist - dist) / 2;
+                                        const nx = dx / dist;
+                                        const ny = dy / dist;
+                                        posA.x -= nx * push;
+                                        posA.y -= ny * push;
+                                        posB.x += nx * push;
+                                        posB.y += ny * push;
+                                    }
+                                }
+                            });
+
+                            // 关系节点避开实体外圈
+                            relPositions.forEach((pos, rid) => {
+                                // 找到关联的实体
+                                const relNode = graph.findById(rid);
+                                const connected = relNode ? relationshipConnections.get(rid) : null;
+                                if (!connected) return;
+
+                                connected.forEach(entNode => {
+                                    const em = entNode.getModel();
+                                    const center = entityPositions.get(em.id) || { x: em.x, y: em.y };
+                                    const limit = entityCollisionRadius.get(em.id) || 80;
+                                    const dx = pos.x - center.x;
+                                    const dy = pos.y - center.y;
+                                    let dist = Math.hypot(dx, dy);
+                                    if (dist === 0) dist = 0.01;
+                                    if (dist < limit) {
+                                        const push = (limit - dist);
+                                        const nx = dx / dist;
+                                        const ny = dy / dist;
+                                        pos.x += nx * push;
+                                        pos.y += ny * push;
+                                    }
+                                });
+                            });
+
+                            // 轻微拉回锚点，防止漂移过远
+                            relPositions.forEach((pos, id) => {
+                                const anchor = relAnchors.get(id);
+                                if (!anchor) return;
+                                pos.x = pos.x * 0.85 + anchor.x * 0.15;
+                                pos.y = pos.y * 0.85 + anchor.y * 0.15;
+                            });
+                        }
+
+                        // 应用修正后的关系位置
+                        relPositions.forEach((pos, id) => {
+                            targets.set(id, { ...pos });
+                        });
+                    }
+
+                    animateNodesToTargets(graph, targets, 850, () => {
+                        smoothFitView(graph, 800, 'easeOutCubic');
+                    });
                 };
 
                 return (
-                    <React.Fragment>
-                        <div className="main-content">
-                            <div className="input-section">
-                                <div className="glass-card">
-                                    <div className="card-header">
-                                        <h2 className="card-title">SQL / DBML 输入</h2>
-                                    </div>
-                                    <div className="card-content">
-                                        <textarea
-                                            className="input-textarea"
+                    <div className="main-content">
+                        <div className="input-section">
+                            <div className="card">
+                                <div className="card-header">
+                                    <h2 className="card-title">
+                                        <span style={{ fontSize: '1.5rem' }}>📄</span>
+                                        SQL / DBML 输入
+                                    </h2>
+                                </div>
+                                <div className="card-content">
+                                    <div style={{ height: '480px', display: 'flex', flexDirection: 'column' }}>
+                                        <CodeEditor
                                             value={inputText}
-                                            onChange={(e) => setInputText(e.target.value)}
-                                            placeholder="在此处粘贴您的 CREATE TABLE 或 DBML 语句"
+                                            onChange={setInputText}
+                                            placeholder="在此处粘贴您的 CREATE TABLE 或 DBML 语句..."
                                         />
-                                        <div className="button-container">
-                                            <button
-                                                className={`generate-button ${loading ? 'loading' : ''}`}
-                                                onClick={handleGenerate}
-                                                disabled={loading}
-                                            >
-                                                {loading ? '生成中...' : '生成ER图'}
-                                            </button>
-                                            <button
-                                                className="export-button"
-                                                onClick={handleExportSVG}
-                                                disabled={!hasGraph}
-                                            >
-                                                导出SVG
-                                            </button>
-                                        </div>
+                                    </div>
+                                    <div className="button-group">
+                                        <button
+                                            className="btn btn-primary"
+                                            onClick={handleMainGenerate}
+                                            disabled={loading}
+                                        >
+                                            {loading ? <div className="spinner" style={{ width: 20, height: 20, borderWidth: 2 }}></div> : '⚡ 生成ER图'}
+                                        </button>
+                                        <button
+                                            className="btn btn-secondary"
+                                            onClick={handleExportSVG}
+                                            disabled={!hasGraph}
+                                        >
+                                            📥 导出SVG
+                                        </button>
                                     </div>
                                 </div>
                             </div>
+                        </div>
 
-                            <div className="output-section">
-                                <div className="glass-card">
-                                    <div className="card-header">
-                                        <h2 className="card-title">ER图预览</h2>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                            <span style={{ fontSize: '14px', color: 'rgba(45, 55, 72, 0.8)', fontWeight: 500 }}>着色</span>
-                                            <Switch 
-                                                checked={isColored} 
-                                                onChange={setIsColored} 
-                                                style={{ backgroundColor: isColored ? '#ff8a65' : '#bfbfbf' }}
-                                            />
-                                            <button 
-                                                className="arrange-button" 
-                                                onClick={handleArrangeLayout}
-                                                disabled={!hasGraph || loading}
-                                            >
-                                                紧凑排布
-                                            </button>
+                        <div className="output-section">
+                            <div className="card">
+                                <div className="card-header" style={{ flexWrap: 'wrap', gap: '16px', height: 'auto' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '24px', flex: 1, minWidth: '300px' }}>
+                                        <h2 className="card-title" style={{ whiteSpace: 'nowrap' }}>
+                                            <span style={{ fontSize: '1.5rem' }}>🎨</span>
+                                            ER图预览
+                                        </h2>
+
+                                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                                            <div className="legend-item" style={{ padding: '4px 10px', fontSize: '0.8rem' }}>
+                                                <div style={{ width: '10px', height: '10px', borderRadius: '3px', background: isColored ? '#e0f2fe' : '#fff', border: isColored ? '2px solid #0ea5e9' : '2px solid #1e293b' }}></div>
+                                                <span>实体</span>
+                                            </div>
+                                            <div className="legend-item" style={{ padding: '4px 10px', fontSize: '0.8rem' }}>
+                                                <div style={{ width: '10px', height: '10px', transform: 'rotate(45deg)', background: isColored ? '#f5f3ff' : '#fff', border: isColored ? '2px solid #8b5cf6' : '2px solid #1e293b' }}></div>
+                                                <span style={{ marginLeft: '4px' }}>关系</span>
+                                            </div>
+                                            <div className="legend-item" style={{ padding: '4px 10px', fontSize: '0.8rem' }}>
+                                                <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: isColored ? '#fff' : '#fff', border: isColored ? '2px solid #94a3b8' : '1px solid #1e293b' }}></div>
+                                                <span>属性</span>
+                                            </div>
+                                            <div className="legend-item" style={{ padding: '4px 10px', fontSize: '0.8rem' }}>
+                                                <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: isColored ? '#ecfdf5' : '#fff', border: isColored ? '2px solid #10b981' : '2px solid #1e293b' }}></div>
+                                                <span style={{ fontWeight: 600, color: isColored ? '#059669' : 'inherit' }}>主键</span>
+                                            </div>
                                         </div>
                                     </div>
-                                    <div className="card-content">
-                                        {error && (
-                                            <div className="error-message">
-                                                {error}
+
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginLeft: 'auto' }}>
+                                        <div style={{ fontSize: '0.85rem', color: 'var(--text-sub)', opacity: 0.8, whiteSpace: 'nowrap', marginRight: '8px' }}>
+                                            🖱️ 双击编辑 • 滚轮缩放
+                                        </div>
+                                        <div style={{ width: '1px', height: '24px', background: 'var(--border)' }}></div>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                            <span style={{ fontSize: '14px', color: 'var(--text-sub)', fontWeight: 500 }}>着色</span>
+                                            <Switch
+                                                checked={isColored}
+                                                onChange={setIsColored}
+                                                style={{ backgroundColor: isColored ? 'var(--accent)' : undefined }}
+                                            />
+                                        </div>
+                                        <button
+                                            className="btn btn-sm btn-accent"
+                                            onClick={handleRegenerate}
+                                            disabled={!inputText.trim() || loading}
+                                            title="使用新的随机布局重新生成ER图"
+                                        >
+                                            🎲 重新布局
+                                        </button>
+                                        <button
+                                            className="btn btn-sm btn-accent"
+                                            onClick={handleArrangeLayout}
+                                            disabled={!hasGraph || loading}
+                                        >
+                                            ✨ 智能布局
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div className="card-content" style={{ position: 'relative', padding: 0, display: 'flex', flexDirection: 'column', height: '100%' }}>
+                                    {error && (
+                                        <div className="error-message" style={{ margin: '20px' }}>
+                                            ⚠️ {error}
+                                        </div>
+                                    )}
+
+                                    <div className={`diagram-container ${showBackground ? '' : 'no-grid'}`} style={{ border: 'none', borderRadius: 0 }}>
+                                        <div 
+                                            className="background-toggle"
+                                            onClick={handleToggleBackground}
+                                            title={showBackground ? '隐藏背景' : '显示背景'}
+                                        >
+                                            <i className={`fa-solid ${showBackground ? 'fa-eye' : 'fa-eye-slash'}`}></i>
+                                        </div>
+                                        {loading && (
+                                            <div className="loading-overlay">
+                                                <div className="spinner"></div>
                                             </div>
                                         )}
-                                        <div className="diagram-container">
-                                            {loading && (
-                                                <div className="loading-overlay">
-                                                    <div className="loading-spinner"></div>
-                                                </div>
-                                            )}
-                                            <div 
-                                                ref={containerRef} 
-                                                style={{ 
-                                                    width: '100%', 
-                                                    height: '100%',
-                                                    position: 'relative' // 添加相对定位，以便输入框可以正确定位
-                                                }}
-                                            />
-                                        </div>
+                                        <div
+                                            ref={containerRef}
+                                            style={{
+                                                width: '100%',
+                                                height: '100%',
+                                                position: 'relative'
+                                            }}
+                                        />
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        
-                        <div className="glass-card" style={{ marginTop: '24px' }}>
-                            <div className="card-header">
-                                <h2 className="card-title">Chen模型说明</h2>
-                            </div>
-                            <div className="card-content">
-                                <div className="feature-grid">
-                                    <div className="feature-item">
-                                        <strong>矩形：</strong>表示实体（Entity）
-                                    </div>
-                                    <div className="feature-item">
-                                        <strong>菱形：</strong>表示关系（Relationship）
-                                    </div>
-                                    <div className="feature-item">
-                                        <strong>椭圆：</strong>表示属性（Attribute）
-                                    </div>
-                                    <div className="feature-item">
-                                        <strong>下划线：</strong>表示主键属性
-                                    </div>
-                                    <div className="feature-item">
-                                        <strong>双击编辑：</strong>双击任意节点即可在原位置编辑内容
-                                    </div>
-                                    <div className="feature-item">
-                                        <strong>样式切换：</strong>右上角开关可切换彩色/黑白模式
-                                    </div>
-                                </div>
-                                <p style={{ marginTop: '16px', fontSize: '0.9rem', color: '#6b7280' }}>
-                                    <strong>支持格式：</strong>SQL (CREATE TABLE) 和 DBML
-                                </p>
-                                <p style={{ marginTop: '4px', fontSize: '0.9rem', color: '#6b7280' }}>
-                                    <strong>交互说明：</strong>可拖拽节点调整位置，鼠标滚轮缩放，拖拽空白区域平移视图，双击节点可编辑内容
-                                </p>
-                                <p style={{ marginTop: '4px', fontSize: '0.9rem', color: '#6b7280' }}>
-                                    <strong>编辑说明：</strong>双击任意节点（实体、属性、关系）可直接在原位置编辑其文本内容，按回车键确认，按ESC键取消，点击其他地方也会自动保存
-                                </p>
-                                <p style={{ marginTop: '4px', fontSize: '0.9rem', color: '#6b7280' }}>
-                                    <strong>导出说明：</strong>点击"导出SVG"按钮可将当前ER图导出为SVG矢量图格式，方便在其他软件中使用或进一步编辑
-                                </p>
-                            </div>
-                        </div>
-                    </React.Fragment>
+                    </div>
                 );
             };
 
@@ -2416,4 +3187,5 @@ Ref: posts.author_id > users.id
         });
     </script>
 </body>
-</html> 
+
+</html>

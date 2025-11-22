@@ -14,8 +14,9 @@ A web-based tool for generating Chen model ER diagrams from SQL CREATE TABLE sta
 
 1. Open `sql2er.html` in your web browser
 2. Paste your SQL CREATE TABLE statements or DBML code in the input area
-3. Click "Generate Chen Model ER Diagram" button
-4. View and interact with the generated ER diagram
+3. Click "Generate ER Diagram" button
+4. If you're not satisfied with the node positions, you can drag nodes to adjust the layout; double-click a node to edit its content
+5. If the diagram is complex, simply drag each rectangle (entity) to the desired position and click the "Smart Optimization" button to automatically organize the layout
 
 ## Supported Formats
 
@@ -61,7 +62,26 @@ Ref: posts.author_id > users.id
 
 ## Example
 
-![Example 1](https://github.com/ystemsrx/ER_diagram_generator/blob/master/assets/eg1.png?raw=true)
+![Example 1](./assets/eg1.png)
+
+When the code is complex, direct generation may not produce a satisfactory diagram. In this case, you can click the **Redo Layout** button in the top right corner to automatically organize a new layout.
+
+If the diagram is still messy, you can **manually** drag the rectangles (entities) to suitable positions (no need to move other elements), and then click the **Smart Optimization** button, which will automatically organize the layout.
+
+For example:
+
+<table>
+<tr>
+<td width="50%">
+<h4>Direct Generation</h4>
+<img src="./assets/eg2.png" alt="Direct Generation"/>
+</td>
+<td width="50%">
+<h4>After Smart Optimization</h4>
+<img src="./assets/eg2_opt.png" alt="Optimized Layout"/>
+</td>
+</tr>
+</table>
 
 ## License
 

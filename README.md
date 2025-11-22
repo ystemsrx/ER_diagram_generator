@@ -19,7 +19,8 @@
 1. 在浏览器中打开 `sql2er.html`
 2. 在输入区域粘贴您的SQL CREATE TABLE语句或DBML代码
 3. 点击"生成ER图"按钮
-4. 查看并与生成的ER图进行交互
+4. 若对节点位置不满意，可拖拽节点以调整布局；双击节点以修改内容
+5. 如果图很复杂，你仅需将每一个矩形（实体）拖拽到期望的位置然后点击“智能优化”按钮，即可自动整理布局
 
 ## 支持格式
 
@@ -65,7 +66,26 @@ Ref: posts.author_id > users.id
 
 ## 示例
 
-![示例1](https://github.com/ystemsrx/ER_diagram_generator/blob/master/assets/eg1.png?raw=true)
+![示例1](./assets/eg1.png)
+
+当代码比较复杂时，直接生成可能无法生成出满意的图，此时可以点击右上角的**重新布局**按钮，自动整理一个新的布局。
+
+如果仍然比较乱，可以**手动**先将矩形（实体）拖拽到合适位置（无需拖动其他的），然后点击**智能优化**按钮，这将会自动整理布局。
+
+例如：
+
+<table>
+<tr>
+<td width="50%">
+<h4>直接生成</h4>
+<img src="./assets/eg2.png" alt="Direct Generation"/>
+</td>
+<td width="50%">
+<h4>手动调整后智能优化</h4>
+<img src="./assets/eg2_opt.png" alt="Optimized Layout"/>
+</td>
+</tr>
+</table>
 
 ## 开源协议
 

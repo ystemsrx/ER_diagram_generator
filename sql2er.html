@@ -212,6 +212,11 @@
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
         }
 
+        .btn-secondary:active {
+            transform: translateY(0);
+            background: #f1f5f9;
+        }
+
         .btn-sm {
             height: 36px;
             padding: 0 20px;
@@ -229,6 +234,11 @@
         .btn-accent:hover {
             background: rgba(14, 165, 233, 0.15);
             transform: translateY(-1px);
+        }
+
+        .btn-accent:active {
+            transform: translateY(0);
+            background: rgba(14, 165, 233, 0.2);
         }
 
         .diagram-container {
@@ -286,6 +296,10 @@
             color: var(--accent-hover);
         }
 
+        .background-toggle:active {
+            transform: scale(0.95);
+        }
+
         .colorize-toggle {
             position: absolute;
             top: 66px;
@@ -336,6 +350,14 @@
 
         .colorize-toggle:hover i {
             color: var(--accent-hover);
+        }
+
+        .colorize-toggle:active {
+            transform: scale(0.95);
+        }
+
+        .colorize-toggle.active:active {
+            transform: scale(0.95);
         }
 
         .button-group {
@@ -444,6 +466,77 @@
 
         /* Mobile and small tablets */
         @media (max-width: 768px) {
+            /* 禁用移动端的hover效果,避免点击后状态保持 */
+            .btn-primary:hover {
+                transform: none;
+                box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);
+            }
+
+            .btn-secondary:hover {
+                transform: none;
+                background: white;
+                border-color: var(--border);
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+            }
+
+            .btn-accent:hover {
+                transform: none;
+                background: rgba(14, 165, 233, 0.1);
+            }
+
+            .background-toggle:hover {
+                transform: none;
+                background: rgba(255, 255, 255, 0.9);
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            }
+
+            .background-toggle:hover i {
+                color: var(--accent);
+            }
+
+            .colorize-toggle:hover {
+                transform: none;
+                background: rgba(255, 255, 255, 0.9);
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            }
+
+            .colorize-toggle.active:hover {
+                transform: none;
+                background: linear-gradient(135deg, #dbeafe 0%, #f3e8ff 50%, #ffe4e6 100%);
+            }
+
+            .colorize-toggle:hover i {
+                color: var(--secondary);
+            }
+
+            .colorize-toggle.active:hover i {
+                color: var(--accent);
+            }
+
+            /* 移动端active状态:点击时放大效果 */
+            .btn-primary:active {
+                transform: scale(1.05);
+            }
+
+            .btn-secondary:active {
+                transform: scale(1.05);
+                background: #f1f5f9;
+            }
+
+            .btn-accent:active {
+                transform: scale(1.05);
+                background: rgba(14, 165, 233, 0.2);
+            }
+
+            .background-toggle:active {
+                transform: scale(1.15);
+            }
+
+            .colorize-toggle:active,
+            .colorize-toggle.active:active {
+                transform: scale(1.15);
+            }
+
             .app-container {
                 padding: 16px;
             }

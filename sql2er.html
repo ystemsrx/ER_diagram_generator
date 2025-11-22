@@ -1369,27 +1369,25 @@
             const App = () => {
                 const [showBackground, setShowBackground] = useState(true);
                 const [inputText, setInputText] = useState(`// 示例DBML，请在此处粘贴您的 DBML 或 SQL 语句
-Table users {
-  id INT [pk, increment]
-  username VARCHAR(255) [not null]
-  email VARCHAR(255) [unique]
-  country_id INT
-  created_at TIMESTAMP
+Table 用户 {
+  编号 INT [pk, increment]
+  用户名 VARCHAR(255) [not null]
+  邮箱 VARCHAR(255) [unique]
+  创建时间 TIMESTAMP
 }
 
-Table countries {
-  id INT [pk]
-  name VARCHAR(255) [not null]
+Table 国家 {
+  编号 INT [pk]
+  名称 VARCHAR(255) [not null]
 }
 
-Table posts {
-  post_id INT [pk]
-  author_id INT
-  content TEXT
+Table 文章 {
+  文章编号 INT [pk]
+  内容 TEXT
 }
 
-Ref: users.country_id > countries.id
-Ref: posts.author_id > users.id
+Ref: 用户.属于 > 国家.编号
+Ref: 文章.作者 > 用户.编号
 `);
                 const [isColored, setIsColored] = useState(true);
                 const [error, setError] = useState(null);

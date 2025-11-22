@@ -53,6 +53,18 @@ Table posts {
 Ref: posts.author_id > users.id
 ```
 
+## Differences from Standard Chen Model
+
+**Relationship Naming:** In the standard Chen model, diamonds (relationships) should use semantic names (such as "belongs to", "owns"). This tool simplifies usage by displaying foreign key field names by default.
+
+**Entity and Attribute Naming:** The standard Chen model recommends using business terminology. This tool displays database table names and column names directly by default.
+
+**Custom Modifications:**
+- Double-click graphical elements to edit display content directly
+- Or modify in source code (DBML/SQL) and regenerate
+
+> 💡 **Reference Standard Examples:** [ER Diagram Generator](https://ystemsrx.github.io/ER_diagram_generator/sql2er.html)
+
 ## Chen Model Elements
 
 - **Rectangle**: Entity (Table)

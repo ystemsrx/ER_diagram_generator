@@ -64,9 +64,9 @@ Ref: posts.author_id > users.id
 
 ![Example 1](./assets/eg1.png)
 
-When the code is complex, direct generation may not produce a satisfactory diagram. In this case, you can click the **Redo Layout** button in the top right corner to automatically organize a new layout.
+When the code is complex, direct generation may not produce a satisfactory diagram. In this case, you can first click the **Force Alignment** button in the top right corner, and then click **Smart Layout** to automatically organize a new layout, which should be relatively neat in theory and only require minor adjustments.
 
-If the diagram is still messy, you can **manually** drag the rectangles (entities) to suitable positions (no need to move other elements), and then click the **Smart Optimization** button, which will automatically organize the layout.
+If in rare cases it's still messy, you can **manually** drag the rectangles (entities) to suitable positions (no need to move other elements), and then click the **Smart Optimization** button, which will automatically organize the layout.
 
 For example:
 

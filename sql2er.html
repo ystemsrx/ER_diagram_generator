@@ -263,6 +263,7 @@
             width: 40px;
             height: 40px;
             background: rgba(255, 255, 255, 0.9);
+            -webkit-backdrop-filter: blur(10px);
             backdrop-filter: blur(10px);
             border-radius: 50%;
             border: 1px solid rgba(226, 232, 240, 0.6);
@@ -288,6 +289,58 @@
         }
 
         .background-toggle:hover i {
+            color: var(--accent-hover);
+        }
+
+        .colorize-toggle {
+            position: absolute;
+            top: 66px;
+            left: 16px;
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.9);
+            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px);
+            border-radius: 50%;
+            border: 1px solid rgba(226, 232, 240, 0.6);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 100;
+        }
+
+        .colorize-toggle:hover {
+            background: rgba(255, 255, 255, 1);
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .colorize-toggle i {
+            font-size: 18px;
+            transition: color 0.3s ease;
+        }
+
+        .colorize-toggle.active {
+            background: linear-gradient(135deg, #dbeafe 0%, #f3e8ff 50%, #ffe4e6 100%);
+            border-color: rgba(14, 165, 233, 0.3);
+        }
+
+        .colorize-toggle.active:hover {
+            background: linear-gradient(135deg, #bfdbfe 0%, #e9d5ff 50%, #fecdd3 100%);
+        }
+
+        .colorize-toggle.active i {
+            color: var(--accent);
+        }
+
+        .colorize-toggle:not(.active) i {
+            color: var(--secondary);
+        }
+
+        .colorize-toggle:hover i {
             color: var(--accent-hover);
         }
 
@@ -1342,7 +1395,6 @@ Ref: posts.author_id > users.id
                 const [error, setError] = useState(null);
                 const [loading, setLoading] = useState(false);
                 const [hasGraph, setHasGraph] = useState(false);
-                const [randomSeed, setRandomSeed] = useState(0); // 随机种子，0表示使用确定性布局
                 const lastInputRef = useRef(''); // 记录上次生成时的输入
                 const containerRef = useRef(null);
                 const graphRef = useRef(null);
@@ -1825,7 +1877,7 @@ Ref: posts.author_id > users.id
                     animateNodesToTargets(graph, targets, 450, onFinish);
                 };
 
-                const handleGenerate = (useSeed = null) => {
+                const handleGenerate = () => {
                     try {
                         setError(null);
                         setLoading(true);
@@ -1835,9 +1887,6 @@ Ref: posts.author_id > users.id
                             setLoading(false);
                             return;
                         }
-
-                        // 确定使用哪个种子：如果明确传入了种子值，使用传入的；否则使用状态中的
-                        const actualSeed = useSeed !== null ? useSeed : randomSeed;
 
                         // 如果输入改变了，记录新输入
                         if (lastInputRef.current !== inputText.trim()) {
@@ -1865,7 +1914,7 @@ Ref: posts.author_id > users.id
                         const { nodes, edges } = generateChenModelData(tables, relationships, isColored);
 
                         // 初始位置：先把不同组件分开围绕中心，避免初始交叉
-                        applyInitialComponentPositions(nodes, edges, containerRef.current, actualSeed);
+                        applyInitialComponentPositions(nodes, edges, containerRef.current, 0);
 
                         // Clear previous graph completely
                         if (graphRef.current) {
@@ -1918,7 +1967,7 @@ Ref: posts.author_id > users.id
                                 alpha: 0.75,          // 初始运动强度
                                 alphaDecay: 0.045,    // 更快衰减以加速初始布局，但仍可看到调整过程
                                 alphaMin: 0.01,       // 停止阈值略放宽，加快收敛
-                                maxIteration: 400,    // 控制迭代次数，缩短初始布局时间
+                                maxIteration: 800,    // 控制迭代次数，提高迭代步数以获得更优的布局
                                 center: [containerRef.current.offsetWidth / 2, 300], // 动态设置布局中心
                                 gravity: 8,           // 降低重心力以增加节点间距
                                 tick: () => {
@@ -2472,26 +2521,365 @@ Ref: posts.author_id > users.id
                     return () => window.removeEventListener('resize', handleResize);
                 }, []);
 
-                // 重新生成：使用新的随机种子重新生成布局
-                const handleRegenerate = () => {
-                    // 生成新的随机种子（1-1000000之间）
-                    const newSeed = Math.floor(Math.random() * 1000000) + 1;
-                    setRandomSeed(newSeed); // 保存到状态以便显示
-                    // 直接传递新种子，不等待状态更新
-                    handleGenerate(newSeed);
-                };
-
-                // 主生成按钮：总是使用确定性布局
-                const handleMainGenerate = () => {
-                    // 重置为确定性布局
-                    setRandomSeed(0); // 保存到状态
-                    // 直接传递 seed=0，不等待状态更新
-                    handleGenerate(0);
-                };
-
                 // 切换背景显示
                 const handleToggleBackground = () => {
                     setShowBackground(!showBackground);
+                };
+
+                // 强制对齐：最长链水平，支链递归拉直（矩形+菱形），组件分隔避免重叠
+                const handleForceAlign = () => {
+                    if (!graphRef.current || graphRef.current.destroyed) return;
+                    const graph = graphRef.current;
+                    const allNodes = graph.getNodes();
+                    if (!allNodes.length) return;
+
+                    const carbonNodes = allNodes.filter(n => {
+                        const t = n.getModel().nodeType;
+                        return t === 'entity' || t === 'relationship';
+                    });
+                    if (!carbonNodes.length) return;
+
+                    const container = containerRef.current;
+                    const canvasWidth = container?.offsetWidth || 1200;
+                    const componentGap = 160;
+
+                    const nodeMap = new Map();
+                    allNodes.forEach(n => nodeMap.set(n.getModel().id, n));
+
+                    const getRadius = (node) => {
+                        const b = node.getBBox();
+                        return Math.sqrt(b.width * b.width + b.height * b.height) / 2;
+                    };
+
+                    const normalizeAngle = (a) => {
+                        let ang = a % (Math.PI * 2);
+                        if (ang < 0) ang += Math.PI * 2;
+                        return ang;
+                    };
+
+                    // 构建仅包含矩形/菱形的邻接表
+                    const carbonAdj = new Map();
+                    graph.getEdges().forEach(e => {
+                        const { source, target } = e.getModel();
+                        const sNode = nodeMap.get(source);
+                        const tNode = nodeMap.get(target);
+                        if (!sNode || !tNode) return;
+                        const sType = sNode.getModel().nodeType;
+                        const tType = tNode.getModel().nodeType;
+                        if ((sType === 'entity' || sType === 'relationship') && (tType === 'entity' || tType === 'relationship')) {
+                            if (!carbonAdj.has(source)) carbonAdj.set(source, new Set());
+                            if (!carbonAdj.has(target)) carbonAdj.set(target, new Set());
+                            carbonAdj.get(source).add(target);
+                            carbonAdj.get(target).add(source);
+                        }
+                    });
+
+                    if (!carbonAdj.size) return;
+
+                    // 计算碳图组件
+                    const carbonIds = carbonNodes.map(n => n.getModel().id);
+                    const visited = new Set();
+                    const components = [];
+                    carbonIds.forEach(id => {
+                        if (visited.has(id)) return;
+                        const stack = [id];
+                        const comp = [];
+                        visited.add(id);
+                        while (stack.length) {
+                            const cur = stack.pop();
+                            comp.push(cur);
+                            const neighbors = carbonAdj.get(cur);
+                            if (!neighbors) continue;
+                            neighbors.forEach(nb => {
+                                if (!visited.has(nb)) {
+                                    visited.add(nb);
+                                    stack.push(nb);
+                                }
+                            });
+                        }
+                        components.push(comp);
+                    });
+
+                    // 实体的属性节点映射
+                    const entityAttrs = new Map();
+                    allNodes.forEach(n => {
+                        const m = n.getModel();
+                        if (m.nodeType === 'attribute' && m.parentEntity) {
+                            if (!entityAttrs.has(m.parentEntity)) entityAttrs.set(m.parentEntity, []);
+                            entityAttrs.get(m.parentEntity).push(n);
+                        }
+                    });
+
+                    const bfsWithin = (start, allowedSet) => {
+                        const dist = new Map();
+                        const prev = new Map();
+                        const queue = [start];
+                        dist.set(start, 0);
+                        while (queue.length) {
+                            const cur = queue.shift();
+                            const neighbors = carbonAdj.get(cur);
+                            if (!neighbors) continue;
+                            neighbors.forEach(nb => {
+                                if (!allowedSet.has(nb) || dist.has(nb)) return;
+                                dist.set(nb, dist.get(cur) + 1);
+                                prev.set(nb, cur);
+                                queue.push(nb);
+                            });
+                        }
+                        return { dist, prev };
+                    };
+
+                    const findLongestPath = (ids) => {
+                        const allowed = new Set(ids);
+                        const start = ids[0];
+                        const { dist: distA } = bfsWithin(start, allowed);
+                        let farA = start;
+                        distA.forEach((d, id) => { if (d > distA.get(farA)) farA = id; });
+                        const { dist: distB, prev: prevB } = bfsWithin(farA, allowed);
+                        let farB = farA;
+                        distB.forEach((d, id) => { if (d > distB.get(farB)) farB = id; });
+                        const path = [];
+                        let cur = farB;
+                        while (cur !== undefined) {
+                            path.unshift(cur);
+                            cur = prevB.get(cur);
+                        }
+                        return path.length ? path : [start];
+                    };
+
+                    // 收集某条支链的节点集合
+                    const collectBranch = (start, blocked) => {
+                        const allowed = new Set();
+                        const stack = [start];
+                        allowed.add(start);
+                        while (stack.length) {
+                            const cur = stack.pop();
+                            const neighbors = carbonAdj.get(cur);
+                            if (!neighbors) continue;
+                            neighbors.forEach(nb => {
+                                if (blocked.has(nb) || allowed.has(nb)) return;
+                                allowed.add(nb);
+                                stack.push(nb);
+                            });
+                        }
+                        return allowed;
+                    };
+
+                    const computeSpacing = (size) => {
+                        // 复杂度越高，间距越大，避免“一坨”
+                        return Math.min(320, 170 + size * 12);
+                    };
+
+                    const layoutComponent = (ids) => {
+                        const carbonSpacing = computeSpacing(ids.length);
+                        const localTargets = new Map();
+                        const dirMap = new Map();
+                        const allowedSet = new Set(ids);
+
+                        const mainPath = findLongestPath(ids);
+                        const mainPathSet = new Set(mainPath);
+                        const total = mainPath.length;
+                        const startX = -carbonSpacing * (total - 1) / 2;
+                        const mainY = 0;
+                        mainPath.forEach((id, idx) => {
+                            localTargets.set(id, { x: startX + idx * carbonSpacing, y: mainY });
+                            dirMap.set(id, { x: 1, y: 0 });
+                        });
+
+                        const placed = new Set(mainPath);
+                        const queue = [...mainPath];
+
+                        const straightenBranch = (rootId, parentId, angle) => {
+                            const blocked = new Set(placed);
+                            blocked.add(parentId);
+                            const branchSet = collectBranch(rootId, blocked);
+                            const path = findLongestPath(Array.from(branchSet));
+                            const unit = { x: Math.cos(angle), y: Math.sin(angle) };
+                            const parentPos = localTargets.get(parentId);
+                            path.forEach((pid, idx) => {
+                                const pos = {
+                                    x: parentPos.x + unit.x * carbonSpacing * (idx + 1),
+                                    y: parentPos.y + unit.y * carbonSpacing * (idx + 1)
+                                };
+                                localTargets.set(pid, pos);
+                                dirMap.set(pid, unit);
+                                if (!placed.has(pid)) queue.push(pid);
+                                placed.add(pid);
+                            });
+                        };
+
+                        while (queue.length) {
+                            const curId = queue.shift();
+                            const curDir = dirMap.get(curId) || { x: 1, y: 0 };
+                            const neighbors = carbonAdj.get(curId);
+                            if (!neighbors) continue;
+                            const unplaced = Array.from(neighbors).filter(id => !placed.has(id));
+                            if (!unplaced.length) continue;
+
+                            // 将未放置邻居按支链分组
+                            const blockedBase = new Set(placed);
+                            blockedBase.add(curId);
+                            const seen = new Set();
+                            const branches = [];
+                            unplaced.forEach(nb => {
+                                if (seen.has(nb)) return;
+                                const branchNodes = collectBranch(nb, blockedBase);
+                                branchNodes.forEach(nid => seen.add(nid));
+                                branches.push({ root: nb, nodes: branchNodes, size: branchNodes.size });
+                            });
+
+                            // 按支链长度排序，最长优先
+                            branches.sort((a, b) => b.size - a.size);
+
+                            const baseAngle = Math.atan2(curDir.y, curDir.x) + Math.PI / 2;
+                            const span = branches.length > 1 ? Math.min(Math.PI * 1.5, Math.PI + (branches.length - 1) * 0.2) : Math.PI / 2;
+                            const step = branches.length === 1 ? 0 : span / (branches.length - 1);
+                            const start = baseAngle - span / 2;
+
+                            branches.forEach((b, idx) => {
+                                const angle = start + step * idx;
+                                straightenBranch(b.root, curId, angle);
+                            });
+                        }
+
+                        // 兜底：仍未布局的节点
+                        ids.forEach(id => {
+                            if (!localTargets.has(id)) {
+                                localTargets.set(id, { x: 0, y: 0 });
+                            }
+                        });
+
+                        // 环绕属性（不移动菱形），记录组件边界
+                        const entityIds = ids.filter(id => nodeMap.get(id)?.getModel().nodeType === 'entity');
+                        entityIds.forEach(eid => {
+                            const entityNode = nodeMap.get(eid);
+                            const centerPos = localTargets.get(eid);
+                            const relNeighbors = Array.from((carbonAdj.get(eid) || new Set()))
+                                .filter(id => allowedSet.has(id) && nodeMap.get(id)?.getModel().nodeType === 'relationship');
+                            const attrs = entityAttrs.get(eid) || [];
+                            const connectors = relNeighbors.length + attrs.length;
+                            if (!connectors) return;
+
+                            const inDir = dirMap.get(eid) || { x: 1, y: 0 };
+                            const angleStep = (Math.PI * 2) / connectors;
+
+                            // 槽位角度均分360°
+                            const slots = [];
+                            for (let i = 0; i < connectors; i++) {
+                                slots.push(normalizeAngle(angleStep * i));
+                            }
+
+                            // 关系角度（固定，不移动菱形）
+                            const relAngles = relNeighbors.map(rid => {
+                                const relPos = localTargets.get(rid);
+                                if (!relPos) return 0;
+                                return normalizeAngle(Math.atan2(relPos.y - centerPos.y, relPos.x - centerPos.x));
+                            });
+
+                            const used = new Set();
+                            const slotRelMap = new Map(); // slotIdx -> relId
+
+                            // 将关系分配到最近槽位
+                            relNeighbors.forEach((rid, idx) => {
+                                const ang = relAngles[idx];
+                                let bestSlot = -1;
+                                let bestDiff = Infinity;
+                                slots.forEach((slotAng, sIdx) => {
+                                    if (used.has(sIdx)) return;
+                                    const diff = Math.min(
+                                        Math.abs(slotAng - ang),
+                                        Math.PI * 2 - Math.abs(slotAng - ang)
+                                    );
+                                    if (diff < bestDiff) {
+                                        bestDiff = diff;
+                                        bestSlot = sIdx;
+                                    }
+                                });
+                                if (bestSlot >= 0) {
+                                    used.add(bestSlot);
+                                    slotRelMap.set(bestSlot, rid);
+                                }
+                            });
+
+                            // 计算紧贴半径（仅保证椭圆不重叠，越近越好）
+                            const entityR = getRadius(entityNode);
+                            const attrR = attrs.length ? Math.max(...attrs.map(a => getRadius(a))) : 30;
+                            const gap = 6;
+                            const minRadEntity = entityR + attrR + gap;
+                            let attrRadius = minRadEntity;
+                            if (connectors > 1) {
+                                const chordNeed = (attrR * 2 + gap);
+                                const denom = Math.sin(angleStep / 2);
+                                if (denom > 0.001) {
+                                    attrRadius = Math.max(minRadEntity, chordNeed / (2 * denom));
+                                }
+                            }
+
+                            // 把剩余槽位用于属性，放在最靠近矩形的半径
+                            const availableSlots = slots
+                                .map((ang, idx) => ({ ang, idx }))
+                                .filter(s => !used.has(s.idx))
+                                .sort((a, b) => a.idx - b.idx);
+
+                            attrs.forEach((attrNode, aIdx) => {
+                                const slot = availableSlots[aIdx % availableSlots.length];
+                                const angle = slot.ang;
+                                const pos = {
+                                    x: centerPos.x + Math.cos(angle) * attrRadius,
+                                    y: centerPos.y + Math.sin(angle) * attrRadius
+                                };
+                                localTargets.set(attrNode.getModel().id, pos);
+                            });
+                        });
+
+                        // 计算组件边界
+                        let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+                        localTargets.forEach((pos, id) => {
+                            const node = nodeMap.get(id);
+                            if (!node) return;
+                            const r = getRadius(node);
+                            minX = Math.min(minX, pos.x - r);
+                            maxX = Math.max(maxX, pos.x + r);
+                            minY = Math.min(minY, pos.y - r);
+                            maxY = Math.max(maxY, pos.y + r);
+                        });
+
+                        return { targets: localTargets, bounds: { minX, maxX, minY, maxY } };
+                    };
+
+                    const componentLayouts = components.map(layoutComponent);
+
+                    // 将组件平铺到画布上，避免互相重叠
+                    const globalTargets = new Map();
+                    let cursorX = componentGap;
+                    let cursorY = componentGap;
+                    let rowHeight = 0;
+                    componentLayouts.forEach(layout => {
+                        const { minX, maxX, minY, maxY } = layout.bounds;
+                        const width = (maxX - minX) + componentGap;
+                        const height = (maxY - minY) + componentGap;
+
+                        if (cursorX + width > canvasWidth - componentGap) {
+                            cursorX = componentGap;
+                            cursorY += rowHeight + componentGap;
+                            rowHeight = 0;
+                        }
+
+                        const offsetX = cursorX - minX;
+                        const offsetY = cursorY - minY;
+
+                        layout.targets.forEach((pos, id) => {
+                            globalTargets.set(id, { x: pos.x + offsetX, y: pos.y + offsetY });
+                        });
+
+                        cursorX += width;
+                        rowHeight = Math.max(rowHeight, height);
+                    });
+
+                    animateNodesToTargets(graph, globalTargets, 750, () => {
+                        graph.refreshPositions();
+                        setTimeout(() => smoothFitView(graph, 600, 'easeOutCubic'), 120);
+                    });
                 };
 
                 // 环绕排布：让属性均匀围绕实体，同时可移动实体以满足关系距离
@@ -2610,7 +2998,7 @@ Ref: posts.author_id > users.id
                     const safeGap = 50; // 实体系统之间的安全间距
                     const entityIds = Array.from(entityPositions.keys());
 
-                    for (let iter = 0; iter < 100; iter++) {
+                    for (let iter = 0; iter < 300; iter++) {
                         let maxMove = 0;
 
                         // 1. 吸引力：通过关系连接的实体
@@ -2727,7 +3115,8 @@ Ref: posts.author_id > users.id
                         });
                     };
 
-                    // 运行两轮，传播推开效果
+                    // 运行三轮，传播推开效果
+                    ensureRelationshipClearance();
                     ensureRelationshipClearance();
                     ensureRelationshipClearance();
 
@@ -3039,6 +3428,52 @@ Ref: posts.author_id > users.id
                         });
                     }
 
+                    // 全局防重叠（所有形状）
+                    const applyGlobalSeparation = () => {
+                        const allNodes = graph.getNodes();
+                        const meta = allNodes.map(n => ({
+                            id: n.getModel().id,
+                            r: getRadius(n)
+                        }));
+                        // 确保每个节点都有目标
+                        meta.forEach(m => {
+                            if (!targets.has(m.id)) {
+                                const model = graph.findById(m.id)?.getModel();
+                                targets.set(m.id, { x: model?.x || 0, y: model?.y || 0 });
+                            }
+                        });
+
+                        for (let iter = 0; iter < 400; iter++) {
+                            let maxMove = 0;
+                            for (let i = 0; i < meta.length; i++) {
+                                for (let j = i + 1; j < meta.length; j++) {
+                                    const a = meta[i], b = meta[j];
+                                    const pa = targets.get(a.id);
+                                    const pb = targets.get(b.id);
+                                    if (!pa || !pb) continue;
+                                    const dx = pb.x - pa.x;
+                                    const dy = pb.y - pa.y;
+                                    let dist = Math.hypot(dx, dy);
+                                    if (dist === 0) dist = 0.01;
+                                    const minDist = a.r + b.r + 8;
+                                    if (dist < minDist) {
+                                        const push = (minDist - dist) / 2;
+                                        const nx = dx / dist;
+                                        const ny = dy / dist;
+                                        pa.x -= nx * push;
+                                        pa.y -= ny * push;
+                                        pb.x += nx * push;
+                                        pb.y += ny * push;
+                                        maxMove = Math.max(maxMove, push);
+                                    }
+                                }
+                            }
+                            if (maxMove < 0.3) break;
+                        }
+                    };
+
+                    applyGlobalSeparation();
+
                     animateNodesToTargets(graph, targets, 850, () => {
                         smoothFitView(graph, 800, 'easeOutCubic');
                     });
@@ -3065,7 +3500,7 @@ Ref: posts.author_id > users.id
                                     <div className="button-group">
                                         <button
                                             className="btn btn-primary"
-                                            onClick={handleMainGenerate}
+                                            onClick={handleGenerate}
                                             disabled={loading}
                                         >
                                             {loading ? <div className="spinner" style={{ width: 20, height: 20, borderWidth: 2 }}></div> : '⚡ 生成ER图'}
@@ -3115,29 +3550,19 @@ Ref: posts.author_id > users.id
                                         <div style={{ fontSize: '0.85rem', color: 'var(--text-sub)', opacity: 0.8, whiteSpace: 'nowrap', marginRight: '8px' }}>
                                             🖱️ 双击编辑 • 滚轮缩放
                                         </div>
-                                        <div style={{ width: '1px', height: '24px', background: 'var(--border)' }}></div>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                            <span style={{ fontSize: '14px', color: 'var(--text-sub)', fontWeight: 500 }}>着色</span>
-                                            <Switch
-                                                checked={isColored}
-                                                onChange={setIsColored}
-                                                style={{ backgroundColor: isColored ? 'var(--accent)' : undefined }}
-                                            />
-                                        </div>
-                                        <button
-                                            className="btn btn-sm btn-accent"
-                                            onClick={handleRegenerate}
-                                            disabled={!inputText.trim() || loading}
-                                            title="使用新的随机布局重新生成ER图"
-                                        >
-                                            🎲 重新布局
-                                        </button>
                                         <button
                                             className="btn btn-sm btn-accent"
                                             onClick={handleArrangeLayout}
                                             disabled={!hasGraph || loading}
                                         >
                                             ✨ 智能布局
+                                        </button>
+                                        <button
+                                            className="btn btn-sm btn-accent"
+                                            onClick={handleForceAlign}
+                                            disabled={!hasGraph || loading}
+                                        >
+                                            📐 强制对齐
                                         </button>
                                     </div>
                                 </div>
@@ -3150,12 +3575,19 @@ Ref: posts.author_id > users.id
                                     )}
 
                                     <div className={`diagram-container ${showBackground ? '' : 'no-grid'}`} style={{ border: 'none', borderRadius: 0 }}>
-                                        <div 
+                                        <div
                                             className="background-toggle"
                                             onClick={handleToggleBackground}
                                             title={showBackground ? '隐藏背景' : '显示背景'}
                                         >
                                             <i className={`fa-solid ${showBackground ? 'fa-eye' : 'fa-eye-slash'}`}></i>
+                                        </div>
+                                        <div
+                                            className={`colorize-toggle ${isColored ? 'active' : ''}`}
+                                            onClick={() => setIsColored(!isColored)}
+                                            title={isColored ? '关闭着色' : '开启着色'}
+                                        >
+                                            <i className="fa-solid fa-palette"></i>
                                         </div>
                                         {loading && (
                                             <div className="loading-overlay">

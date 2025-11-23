@@ -76,9 +76,9 @@ Ref: posts.author_id > users.id
 
 ![Example 1](./assets/eg1.png)
 
-When the code is complex, direct generation may not produce a satisfactory diagram. In this case, you can first click the **Force Alignment** button in the top right corner, and then click **Smart Layout** to automatically organize a new layout, which should be relatively neat in theory and only require minor adjustments.
+When the code is complex, direct generation may not produce a satisfactory diagram. In this case, you can click the **Smart Layout** button to automatically organize the layout. Theoretically, it should be relatively neat and only require minor adjustments.
 
-The **Force2** toggle is disabled by default. If the generated diagram looks messy, you can enable this toggle and generate again. It provides a more stable structure.
+The **Force Alignment** button can be used for more advanced optimization of complex diagram layouts. After clicking it, the tool will attempt to align and arrange all entities. Then using the **Smart Layout** button again will typically result in a more ideal layout.
 
 If in rare cases it's still messy, you can **manually** drag the rectangles (entities) to suitable positions (no need to move other elements), and then click the **Smart Layout** button, which will automatically organize the layout.
 

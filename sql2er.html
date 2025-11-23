@@ -1463,6 +1463,29 @@
                 }
             });
 
+            // 菱形节点边界计算函数（供 getLinkPoint 使用）
+            const calculateDiamondLinkPoint = function(point) {
+                const bbox = this.getBBox();
+                const centerX = bbox.centerX;
+                const centerY = bbox.centerY;
+                const dx = point.x - centerX;
+                const dy = point.y - centerY;
+                const halfWidth = bbox.width / 2 || 1;
+                const halfHeight = bbox.height / 2 || 1;
+
+                // 当目标点与中心重合时直接返回中心，避免除零
+                if (Math.abs(dx) < 1e-6 && Math.abs(dy) < 1e-6) {
+                    return { x: centerX, y: centerY };
+                }
+
+                // 菱形公式：|x|/a + |y|/b = 1
+                const t = 1 / (Math.abs(dx) / halfWidth + Math.abs(dy) / halfHeight);
+                return {
+                    x: centerX + dx * t,
+                    y: centerY + dy * t
+                };
+            };
+
             G6.registerNode('relationship', {
                 draw(cfg, group) {
                     const fontSize = 16;
@@ -1530,8 +1553,31 @@
                     }
 
                     return shape;
+                },
+                // 自定义连线计算：使用菱形边界而不是外接矩形
+                getLinkPoint: calculateDiamondLinkPoint,
+                // 关闭锚点吸附，保证连线直接命中菱形边
+                getAnchorPoints() {
+                    return [];
                 }
             });
+
+            // 让菱形连线落在真实边界上（而非外接矩形）
+            const patchRelationshipLinkPoints = (graph) => {
+                const nodes = graph.getNodes();
+                nodes.forEach((n) => {
+                    const model = n.getModel();
+                    if (model.nodeType !== 'relationship') return;
+                    // 覆盖当前节点实例的 getLinkPoint，让所有连接重新计算到菱形边
+                    n.getLinkPoint = calculateDiamondLinkPoint;
+                });
+
+                // 强制边刷新使用新的连线点
+                graph.getEdges().forEach((edge) => {
+                    graph.updateItem(edge, {});
+                });
+                graph.refresh();
+            };
 
             const CodeEditor = ({ value, onChange, placeholder }) => {
                 const editorRef = useRef(null);
@@ -2255,6 +2301,8 @@ Ref: 文章.作者 > 用户.编号
 
                         // 应用初始样式
                         updateGraphStyles(graph, isColored);
+                        // 修正菱形连线计算
+                        patchRelationshipLinkPoints(graph);
 
                         // 初始渲染后使用平滑动画调整视图
                         setTimeout(() => {
@@ -2644,6 +2692,8 @@ Ref: 文章.作者 > 用户.编号
 
                         // 读取当前图形数据（包含节点位置）
                         tempGraph.read(data);
+                        // 让导出的 SVG 也使用菱形真实边界
+                        patchRelationshipLinkPoints(tempGraph);
 
                         // 等待渲染完成
                         setTimeout(() => {

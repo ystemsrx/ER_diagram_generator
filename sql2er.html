@@ -1607,7 +1607,6 @@ Ref: 文章.作者 > 用户.编号
                 const [error, setError] = useState(null);
                 const [loading, setLoading] = useState(false);
                 const [hasGraph, setHasGraph] = useState(false);
-                const [useForce2, setUseForce2] = useState(false);
                 const lastInputRef = useRef(''); // 记录上次生成时的输入
                 const containerRef = useRef(null);
                 const graphRef = useRef(null);
@@ -2160,7 +2159,7 @@ Ref: 文章.作者 > 用户.编号
                             },
 
                             // 优化后的力导向布局配置，以完全避免重叠
-                            layout: useForce2 ? {
+                            layout: {
                                 type: 'force2', // 使用 force2 布局
                                 preventOverlap: true, // 确保节点不重叠
                                 // 忽略文本长度，统一处理椭圆/菱形尺寸，避免因内容长短造成布局偏差
@@ -2185,44 +2184,6 @@ Ref: 文章.作者 > 用户.编号
                                 animate: true,           // 启用动画以显示布局过程
                                 center: [containerRef.current.offsetWidth / 2, 300], // 布局中心
                                 clustering: false,       // 不使用聚类
-                                tick: () => {
-                                    // 逐帧刷新以展现自动调整过程
-                                    graph.refreshPositions();
-                                },
-                                onLayoutEnd: () => {
-                                    // 先让互不相连的组件环绕分布，避免十字交叉
-                                    setTimeout(() => {
-                                        if (graphRef.current && !graphRef.current.destroyed) {
-                                            spreadDisconnectedComponents(graphRef.current, () => {
-                                                // 布局完成后平滑调整视图
-                                                smoothFitView(graphRef.current, 800, 'easeOutCubic');
-                                            });
-                                        }
-                                    }, 30);
-                                }
-                            } : {
-                                type: 'force', // 使用普通 force 布局
-                                preventOverlap: true, // 确保节点不重叠
-                                // 忽略文本长度，统一处理椭圆/菱形尺寸，避免因内容长短造成布局偏差
-                                nodeSize: (node) => {
-                                    const uniformSizes = {
-                                        entity: 140,
-                                        relationship: 90,
-                                        attribute: 90
-                                    };
-                                    return uniformSizes[node.nodeType] || 90;
-                                },
-                                nodeSpacing: 20,     // 增加节点间距，为曲线路由留空间
-                                nodeStrength: -130,  // 斥力提高，为曲线路由留更多空间
-                                edgeStrength: 0.9,   // 略减弱拉力，让路由有更多选择
-                                linkDistance: 120,   // 增加连线长度，为曲线留空间
-                                collideStrength: 1.0, // 使用最强的碰撞检测力，严格防止重叠
-                                alpha: 0.75,          // 初始运动强度
-                                alphaDecay: 0.045,    // 更快衰减以加速初始布局，但仍可看到调整过程
-                                alphaMin: 0.01,       // 停止阈值略放宽，加快收敛
-                                maxIteration: 800,    // 控制迭代次数，提高迭代步数以获得更优的布局
-                                center: [containerRef.current.offsetWidth / 2, 300], // 动态设置布局中心
-                                gravity: 8,           // 降低重心力以增加节点间距
                                 tick: () => {
                                     // 逐帧刷新以展现自动调整过程
                                     graph.refreshPositions();
@@ -3800,39 +3761,6 @@ Ref: 文章.作者 > 用户.编号
                                     </div>
 
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginLeft: 'auto' }}>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                            <span style={{ fontSize: '0.85rem', color: 'var(--text-sub)' }}>Force2:</span>
-                                            <label style={{ position: 'relative', display: 'inline-block', width: '44px', height: '24px', cursor: 'pointer' }}>
-                                                <input
-                                                    type="checkbox"
-                                                    checked={useForce2}
-                                                    onChange={(e) => setUseForce2(e.target.checked)}
-                                                    style={{ opacity: 0, width: 0, height: 0 }}
-                                                />
-                                                <span style={{
-                                                    position: 'absolute',
-                                                    top: 0,
-                                                    left: 0,
-                                                    right: 0,
-                                                    bottom: 0,
-                                                    backgroundColor: useForce2 ? '#0ea5e9' : '#cbd5e1',
-                                                    borderRadius: '24px',
-                                                    transition: 'background-color 0.3s'
-                                                }}>
-                                                    <span style={{
-                                                        position: 'absolute',
-                                                        content: '',
-                                                        height: '18px',
-                                                        width: '18px',
-                                                        left: useForce2 ? '23px' : '3px',
-                                                        bottom: '3px',
-                                                        backgroundColor: 'white',
-                                                        borderRadius: '50%',
-                                                        transition: 'left 0.3s'
-                                                    }}></span>
-                                                </span>
-                                            </label>
-                                        </div>
                                         <button
                                             className="btn btn-sm btn-accent"
                                             onClick={handleArrangeLayout}

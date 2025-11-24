@@ -2,7 +2,7 @@
 
 ## Quick Start
 
-Visit: [ER Diagram Generator](https://ystemsrx.github.io/ER_diagram_generator/sql2er.html)
+Visit: [ER Diagram Generator](https://ystemsrx.github.io/sql_to_ER/sql2er.html)
 
 If you need to draw a logical model, please use [dbdiagram.io](https://dbdiagram.io), which is free.
 
@@ -63,7 +63,7 @@ Ref: posts.author_id > users.id
 - Double-click graphical elements to edit display content directly
 - Or modify in source code (DBML/SQL) and regenerate
 
-> 💡 **Reference Standard Examples:** [ER Diagram Generator](https://ystemsrx.github.io/ER_diagram_generator/sql2er.html)
+> 💡 **Reference Standard Examples:** [ER Diagram Generator](https://ystemsrx.github.io/sql_to_ER/sql2er.html)
 
 ## Chen Model Elements
 
